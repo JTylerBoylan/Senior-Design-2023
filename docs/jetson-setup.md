@@ -20,3 +20,4 @@
 ### 1. [Visual SLAM](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_visual_slam)
 ### 2. [nvblox](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_nvblox)
 ### 3. [DNN Inference](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_dnn_inference)
+### 4. [Object Detection](https://github.com/NVIDIA-ISAAC-ROS/isaac_ros_object_detection)
