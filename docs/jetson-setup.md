@@ -3,7 +3,7 @@
 ## 1. [Getting Started with Jetson AGX Orin Developer Kit](https://developer.nvidia.com/embedded/learn/get-started-jetson-agx-orin-devkit)
 
 ### Requirements
-1. PC Monitor w/ DisplayPort cable (HDMI)
+1. PC Monitor w/ DisplayPort cable
 2. USB Keyboard & Mouse
 
 ### Ubuntu Setup
