@@ -4,7 +4,7 @@
 #include "sbmpo/model.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 
-#define M_2PI 6.283185307179586
+#define M_2PI 6.283185307179586f
 
 namespace senior_design {
 
@@ -72,9 +72,10 @@ using namespace sbmpo;
         // Get the cost of a control
         float cost(const State& state2, const State& state1, const Control& control, const float time_span) {
             float cost_time = time_span;
-            float cost_accel = (LIN_ACCELERATION_COST_COEFF * control[0] + TURN_ACCELERATION_COST_COEFF * control[1]) * time_span; 
+            float cost_accel = LIN_ACCELERATION_COST_COEFF * control[0] * time_span;
+            float cost_turn = TURN_ACCELERATION_COST_COEFF * control[1] * time_span; 
             float cost_obstacles = cost_map(state2[0], state2[1]);
-            return cost_time + cost_accel + cost_obstacles;
+            return cost_time + cost_accel + cost_turn + cost_obstacles;
         }
 
         // Get the heuristic of a state
@@ -97,11 +98,11 @@ using namespace sbmpo;
             return  state[0] - X_MAX <= 0 && 
                     X_MIN - state[0] <= 0 &&
                     state[1] - Y_MAX <= 0 && 
-                    Y_MIN - state[1] >= 0 &&
+                    Y_MIN - state[1] <= 0 &&
                     state[3] - VELOCITY_MAX <= 0 && 
-                    VELOCITY_MIN - state[3] >= 0 &&
+                    VELOCITY_MIN - state[3] <= 0 &&
                     state[4] - TURN_ANGLE_MAX <= 0 && 
-                    TURN_ANGLE_MIN - state[4] >= 0 &&
+                    TURN_ANGLE_MIN - state[4] <= 0 &&
                     state[3]*state[3]*INVERSE_WHEEL_BASE_LENGTH*tan(state[2]) - TURN_ACCELERATION_MAX <= 0 &&
                     map_lookup(map_slice_, state[0], state[1]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
         }

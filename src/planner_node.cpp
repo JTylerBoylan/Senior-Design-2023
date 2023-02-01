@@ -1,10 +1,12 @@
 #include <math.h>
+#include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 
-class PlannerNode : public rclcpp::Node
-{
+using namespace std::chrono_literals;
+
+class PlannerNode : public rclcpp::Node {
 	public:
 
 		PlannerNode() : Node("planner_node") {
@@ -17,6 +19,10 @@ class PlannerNode : public rclcpp::Node
 				1, // Queue size
 				std::bind(&PlannerNode::map_slice_callback, this, std::placeholders::_1)); // Callback function
 
+			// Start planner loop
+			timer_ = this->create_wall_timer(500ms,
+				std::bind(&PlannerNode::timer_callback, this));
+
 		}
 
 	private:
@@ -25,8 +31,16 @@ class PlannerNode : public rclcpp::Node
 			slice_ = slice;
 		}
 
-		rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
+		void timer_callback() {
+			/*
+				RUN PLANNER
+			*/
+		}
 
+		// Add odometry subscriber
+		// Add goal subscriber
+		rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
+		rclcpp::TimerBase::SharedPtr timer_;
 		nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice_;
 };
 
