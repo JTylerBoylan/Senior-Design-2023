@@ -30,10 +30,17 @@ using namespace sbmpo;
         const float TURN_ACCELERATION_MAX = 5.0; // m/s^2
 
         // Costs
-        const float LIN_ACCELERATION_COST_COEFF = 0;
-        const float TURN_ACCELERATION_COST_COEFF = 0;
-        const float OBSTACLE_COST_COEFF_A = 10;
-        const float OBSTACLE_COST_COEFF_B = 10;
+        const float LIN_ACCELERATION_COST_COEFF = 0; // s^2/m
+        const float TURN_ACCELERATION_COST_COEFF = 0; // s/rad
+        const float OBSTACLE_COST_COEFF_A = 10; // m^-1
+        const float OBSTACLE_COST_COEFF_B = 10; // m^-1
+
+        // Goal Thresholds
+        const float INVERSE_X_GOAL_THRESHOLD = 1.0; // m^-1
+        const float INVERSE_Y_GOAL_THRESHOLD = 1.0; // m^-1
+        const float INVERSE_Q_GOAL_THRESHOLD = 6.0 / M_PI; // rad^-1
+        const float INVERSE_V_GOAL_THRESHOLD = 1.0; // s/m
+        const float INVERSE_G_GOAL_THRESHOLD = 6.0 / M_PI; // s/rad
 
         public:
         
@@ -71,10 +78,19 @@ using namespace sbmpo;
         }
 
         // Get the heuristic of a state
-        float heuristic(const State& state, const State& goal) {}
+        float heuristic(const State& state, const State& goal) {
+            float dx = (goal[0] - state[0]) * INVERSE_X_GOAL_THRESHOLD;
+            float dy = (goal[1] - state[1]) * INVERSE_Y_GOAL_THRESHOLD;
+            float dq = (goal[2] - state[2]) * INVERSE_Q_GOAL_THRESHOLD;
+            float dv = (goal[3] - state[3]) * INVERSE_V_GOAL_THRESHOLD;
+            float dg = (goal[4] - state[4]) * INVERSE_G_GOAL_THRESHOLD;
+            return sqrt(dx*dx + dy*dy + dq*dq + dv*dv + dg*dg);
+        }
 
         // Determine if state is goal
-        bool is_goal(const State& state, const State& goal, const float goal_threshold) {}
+        bool is_goal(const State& state, const State& goal, const float goal_threshold) {
+            return heuristic(state,goal) <= goal_threhold;
+        }
 
         // Determine if state is valid
         bool is_valid(const State& state) {
