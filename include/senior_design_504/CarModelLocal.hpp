@@ -12,6 +12,10 @@ using namespace sbmpo;
 
     class CarModelLocal : Model {
 
+        // Goal state
+        State start = {/* TODO */}
+        State goal = {/* TODO */};
+
         // Parameters
         const int INTEGRATION_SIZE = 5;
         const float INVALID_DISTANCE = -1.0;
@@ -41,11 +45,17 @@ using namespace sbmpo;
         const float INVERSE_Q_GOAL_THRESHOLD = 6.0 / M_PI; // rad^-1
         const float INVERSE_V_GOAL_THRESHOLD = 1.0; // s/m
         const float INVERSE_G_GOAL_THRESHOLD = 6.0 / M_PI; // s/rad
+        const float GOAL_THRESHOLD_FACTOR = 1.0; // m
 
         public:
         
         CarModelLocal(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice) {
             slice_ = map_slice;
+        }
+
+        // Return initial state
+        State initial_state() {
+            return start;
         }
 
         // Evaluate a node with a control
@@ -79,7 +89,7 @@ using namespace sbmpo;
         }
 
         // Get the heuristic of a state
-        float heuristic(const State& state, const State& goal) {
+        float heuristic(const State& state) {
             float dx = (goal[0] - state[0]) * INVERSE_X_GOAL_THRESHOLD;
             float dy = (goal[1] - state[1]) * INVERSE_Y_GOAL_THRESHOLD;
             float dq = (goal[2] - state[2]) * INVERSE_Q_GOAL_THRESHOLD;
@@ -89,8 +99,8 @@ using namespace sbmpo;
         }
 
         // Determine if state is goal
-        bool is_goal(const State& state, const State& goal, const float goal_threshold) {
-            return heuristic(state,goal) <= goal_threhold;
+        bool is_goal(const State& state) {
+            return heuristic(state) <= GOAL_THRESHOLD_FACTOR;
         }
 
         // Determine if state is valid
