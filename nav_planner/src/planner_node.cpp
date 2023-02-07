@@ -16,33 +16,37 @@ class PlannerNode : public rclcpp::Node {
 
 		PlannerNode() : Node("planner_node") {
 
-			this->declare_parameter("global_update_rate");
-			this->declare_parameter("local_update_rate");
-			this->declare_parameter("global_max_iterations");
-			this->declare_parameter("local_max_iterations");
-			this->declare_parameter("global_max_generations");
-			this->declare_parameter("local_max_generations");
-			this->declare_parameter("global_sample_time");
-			this->declare_parameter("local_sample_time");
-			this->declare_parameter("global_grid_states");
-			this->declare_parameter("local_grid_states");
-			this->declare_parameter("global_grid_resolution");
-			this->declare_parameter("local_grid_resolution");
-			this->declare_parameter("global_controls");
-			this->declare_parameter("local_controls");
-			this->declare_parameter("global_plan_div_point");
+			// Create local planner object
+			global_car_model_ = std::make_shared<senior_design::CarModelGlobal>(slice_);
 
-			global_update_rate_ = this->get_parameter("global_update_rate").as_double();
-			local_update_rate_ = this->get_parameter("global_update_rate").as_double();
-			global_max_iterations_ = this->get_parameter("global_max_iterations").as_int();
-			local_max_iterations_ = this->get_parameter("local_max_iterations").as_int();
-			global_max_generations_ = this->get_parameter("global_max_generations").as_int();
-			local_max_generations_ = this->get_parameter("local_max_generations").as_int();
-			global_sample_time_ = this->get_parameter("global_sample_time").as_double();
-			local_sample_time_ = this->get_parameter("local_sample_time").as_double();
-			/*
-				TODO: REST OF PARAMS
-			*/
+			// Create local planner object
+			local_car_model_ = std::make_shared<senior_design::CarModelLocal>(slice_);
+
+			// Global params
+			global_update_rate_ = declare_parameter<int>("global_update_rate") * 1ms;
+			global_params_.max_iterations = declare_parameter<int>("global_max_iterations");
+			global_params_.max_generations = declare_parameter<int>("global_max_generations");
+			global_params_.sample_time = declare_parameter<float>("global_sample_time");
+			global_params_.grid_states = declare_parameter<std::vector<bool>>("global_grid_states");
+			std::vector<double> global_resolution = declare_parameter<std::vector<double>>("global_grid_resolution");
+			global_params_.grid_resolution = std::vector<float>(global_resolution.begin(), global_resolution.end());
+			std::vector<double> global_controls = declare_parameter<std::vector<double>>("global_controls");
+			global_params_.samples = array_to_controls(global_controls, global_car_model_->NUM_CONTROLS);
+
+
+			// Local params
+			local_update_rate_ = declare_parameter<int>("local_update_rate") * 1ms;
+			local_params_.max_iterations = declare_parameter<int>("local_max_iterations");
+			local_params_.max_generations = declare_parameter<int>("local_max_generations");
+			local_params_.sample_time = declare_parameter<float>("local_sample_time");
+			local_params_.grid_states = declare_parameter<std::vector<bool>>("local_grid_states");
+			std::vector<double> local_resolution = declare_parameter<std::vector<double>>("local_grid_resolution");
+			local_params_.grid_resolution = std::vector<float>(local_resolution.begin(), local_resolution.end());
+			std::vector<double> local_controls = declare_parameter<std::vector<double>>("local_controls");
+			local_params_.samples = array_to_controls(local_controls, local_car_model_->NUM_CONTROLS);
+
+			// Global plan point to give as local goal
+			global_plan_div_point_ = declare_parameter<int>("global_plan_div_point");
 
 			RCLCPP_INFO(this->get_logger(), "Planner node initialized.");
 
@@ -59,12 +63,6 @@ class PlannerNode : public rclcpp::Node {
 				1, // Queue size
 				std::bind(&PlannerNode::odometry_callback, this, std::placeholders::_1)
 			);
-
-			// Create local planner object
-			global_car_model_ = std::make_shared<senior_design::CarModelGlobal>(slice_);
-
-			// Create local planner object
-			local_car_model_ = std::make_shared<senior_design::CarModelLocal>(slice_);
 
 			// Start global planner loop
 			timer_global_ = this->create_wall_timer(500ms,
@@ -90,12 +88,27 @@ class PlannerNode : public rclcpp::Node {
 			/*
 				RUN GLOBAL PLANNER
 			*/
+			// Set start & goal
+			// Run
 		}
 
 		void local_planner_callback() {
 			/*
 				RUN LOCAL PLANNER
 			*/
+			// Set start & goal
+			// Run
+		}
+
+		std::vector<sbmpo::Control> array_to_controls(const std::vector<double> array, int num_controls) {
+			std::vector<sbmpo::Control> controls;
+			int size = array.size() / num_controls;
+			for (int i = 0; i < size; i++) {
+				sbmpo::Control control;
+				for (int j = 0; j < num_controls; j++)
+					control.push_back(float(array[num_controls*i + j]));
+				controls.push_back(control);
+			}
 		}
 
 		// ROS Subscribers
@@ -117,12 +130,7 @@ class PlannerNode : public rclcpp::Node {
 
 		// Parameters
 		std::chrono::milliseconds global_update_rate_, local_update_rate_;
-		int global_max_iterations_, local_max_iterations_;
-		int global_max_generations_, local_max_generations_;
-		float global_sample_time_, local_sample_time_;
-		std::vector<bool> global_grid_states_, local_grid_states_;
-		std::vector<float> global_grid_resolution_, local_grid_resolution_;
-		std::vector<sbmpo::Control> global_controls_, local_controls;
+		sbmpo::Parameters global_params_, local_params_;
 		int global_plan_div_point_;
 
 };

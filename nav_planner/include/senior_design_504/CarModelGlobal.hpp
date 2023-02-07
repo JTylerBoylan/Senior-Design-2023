@@ -14,6 +14,8 @@ using namespace sbmpo;
 
     class CarModelGlobal : Model {
 
+        public:
+        
         // States used for this model
         const int NUM_STATES = 2;
         enum STATES {X, Y};
@@ -40,8 +42,6 @@ using namespace sbmpo;
         const float INVERSE_X_GOAL_THRESHOLD = 1.0; // m^-1
         const float INVERSE_Y_GOAL_THRESHOLD = 1.0; // m^-1
         const float GOAL_THRESHOLD_FACTOR = 1.0; // m
-
-        public:
         
         // Constructor
         CarModelGlobal(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice) {
