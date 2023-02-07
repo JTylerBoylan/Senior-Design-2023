@@ -15,11 +15,13 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nvblox_msgs REQUIRED)
 
-add_executable(planner src/planner_node.cpp)
-ament_target_dependencies(planner rclcpp nvblox_msgs)
+include_directories(include)
 
-install(TARGETS
-	planner
+add_executable(planner src/planner_node.cpp)
+ament_target_dependencies(planner rclcpp nvblox_msgs ${PROJECT_NAME})
+
+install(
+	TARGETS planner
 	DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

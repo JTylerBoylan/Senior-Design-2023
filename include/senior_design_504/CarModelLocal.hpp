@@ -3,6 +3,7 @@
 
 #include "sbmpo/model.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 
 #define M_2PI 6.283185307179586f
 #define INVALID_DISTANCE -1.0f
@@ -61,7 +62,7 @@ using namespace sbmpo;
         // Evaluate a node with a control
         void next_state(State& state, const Control& control, const float time_span) {
 
-            // Integrate control into state
+            // Integrate control into state (Euler)
             float time_increment = time_span / INTEGRATION_SIZE;
             for (int i = 0; i < INTEGRATION_SIZE; i++) {
                 state[0] += cosf(state[2]) * state[3] * time_increment;
@@ -74,8 +75,8 @@ using namespace sbmpo;
             }
 
             // Angle wrap
-            if (state[2] >= M_2PI)  state[2] -= M_2PI;
-            if (state[2] < 0)       state[2] += M_2PI;
+            while (state[2] >= M_2PI)  state[2] -= M_2PI;
+            while (state[2] < 0)       state[2] += M_2PI;
 
         }
 
