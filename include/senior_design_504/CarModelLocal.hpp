@@ -5,6 +5,7 @@
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 
 #define M_2PI 6.283185307179586f
+#define INVALID_DISTANCE -1.0f
 
 namespace senior_design {
 
@@ -13,12 +14,11 @@ using namespace sbmpo;
     class CarModelLocal : Model {
 
         // Goal state
-        State start = {/* TODO */}
+        State start = {/* TODO */};
         State goal = {/* TODO */};
 
         // Parameters
         const int INTEGRATION_SIZE = 5;
-        const float INVALID_DISTANCE = -1.0;
         const float INVERSE_WHEEL_BASE_LENGTH = 2.0; // m
 
         // Constraints
@@ -36,8 +36,8 @@ using namespace sbmpo;
         // Costs
         const float LIN_ACCELERATION_COST_COEFF = 0; // s^2/m
         const float TURN_ACCELERATION_COST_COEFF = 0; // s/rad
-        const float OBSTACLE_COST_COEFF_A = 10; // m^-1
-        const float OBSTACLE_COST_COEFF_B = 10; // m^-1
+        const float OBSTACLE_COST_COEFF_A = -10; // m^-1
+        const float OBSTACLE_COST_COEFF_B = 30; // m^-1
 
         // Goal Thresholds
         const float INVERSE_X_GOAL_THRESHOLD = 1.0; // m^-1
@@ -50,7 +50,7 @@ using namespace sbmpo;
         public:
         
         CarModelLocal(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice) {
-            slice_ = map_slice;
+            map_slice_ = map_slice;
         }
 
         // Return initial state
@@ -118,8 +118,15 @@ using namespace sbmpo;
         }
 
         float cost_map(const float x, const float y) {
-            float distance = map_lookup(map_slice_, x, ,y);
-            return OBSTACLE_COST_COEFF_A * distance + OBSTACLE_COST_COEFF_B;
+
+            float distance = map_lookup(map_slice_, x, y);
+
+            // Check if valid lookup
+            if (distance == INVALID_DISTANCE)
+                return 0;
+                
+            float cost = OBSTACLE_COST_COEFF_A * distance + OBSTACLE_COST_COEFF_B;
+            return cost >= 0 ? cost : 0;
         }
 
         private:
@@ -130,7 +137,6 @@ using namespace sbmpo;
 
     // Map lookup function (Move this to model)
     float map_lookup(const nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice_, const const float x, const float y) {
-        // Will return -1 if invalid
 
         // See if slice exists
         if (slice_ == nullptr)
