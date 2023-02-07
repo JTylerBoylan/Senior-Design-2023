@@ -2,6 +2,7 @@
 #include <chrono>
 
 #include "senior_design_504/CarModelLocal.hpp"
+#include "senior_design_504/CarModelGlobal.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
@@ -63,6 +64,7 @@ class PlannerNode : public rclcpp::Node {
 		nav_msgs::msg::Odometry::ConstSharedPtr odom_;
 		nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice_;
 
+		std::shared_ptr<senior_design::CarModelGlobal> global_car_model_;
 		std::shared_ptr<senior_design::CarModelLocal> local_car_model_;
 };
 

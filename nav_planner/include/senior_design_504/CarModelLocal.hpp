@@ -2,11 +2,11 @@
 #define SD_LOCAL_CAR_MODEL_SBMPO_HPP
 
 #include "sbmpo/model.hpp"
+#include "senior_design_504/map_slice_util.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
 #define M_2PI 6.283185307179586f
-#define INVALID_DISTANCE -1.0f
 
 namespace senior_design {
 
@@ -147,35 +147,6 @@ using namespace sbmpo;
         std::shared_ptr<State> start_, goal_;
 
     };
-
-    // Map lookup function (Move this to model)
-    float map_lookup(const nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice_, const const float x, const float y) {
-
-        // See if slice exists
-        if (slice_ == nullptr)
-            return INVALID_DISTANCE;
-
-        // Get the map indices
-        float x_index = round((x - slice_->origin.x) / slice_->resolution);
-        float y_index = round((y - slice_->origin.y) / slice_->resolution);
-
-        // Check map bounds
-        if (x_index < 0 || x_index >= static_cast<int>(slice_->width) ||
-            y_index < 0 || y_index >= static_cast<int>(slice_->height))
-            return INVALID_DISTANCE;
-
-        // Convert to index
-        size_t index = x_index * slice_->width + y_index;
-
-        // Grab value from slice
-        float distance = slice_->data[index];
-
-        // Check if unknown
-        if (distance == slice_->unknown_value)
-            return INVALID_DISTANCE;
-        
-        return distance;
-    }
 
 }
 
