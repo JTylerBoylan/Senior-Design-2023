@@ -18,7 +18,7 @@ find_package(nvblox_msgs REQUIRED)
 include_directories(include)
 
 add_executable(planner src/planner_node.cpp)
-ament_target_dependencies(planner rclcpp nvblox_msgs ${PROJECT_NAME})
+ament_target_dependencies(planner rclcpp nvblox_msgs)
 
 install(
 	TARGETS planner

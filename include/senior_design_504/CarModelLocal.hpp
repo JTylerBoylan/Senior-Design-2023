@@ -14,9 +14,13 @@ using namespace sbmpo;
 
     class CarModelLocal : Model {
 
-        // Goal state
-        State start = {/* TODO */};
-        State goal = {/* TODO */};
+        // States used for this model
+        const int NUM_STATES = 5;
+        enum STATES {X, Y, Q, V, G};
+
+        // Controls used for this model
+        const int NUM_CONTROLS = 2;
+        enum CONTROLS {dVdt, dGdt};
 
         // Parameters
         const int INTEGRATION_SIZE = 5;
@@ -50,14 +54,21 @@ using namespace sbmpo;
 
         public:
         
+        // Constructor
         CarModelLocal(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice) {
             map_slice_ = map_slice;
+            start_ = std::make_shared<State>(NUM_STATES);
+            goal_ = std::make_shared<State>(NUM_CONTROLS);
         }
 
+        // Get start state pointer
+        std::shared_ptr<State> start_state() { return start_; }
+
+        // Get goal state pointer
+        std::shared_ptr<State> goal_state() { return goal_; }
+
         // Return initial state
-        State initial_state() {
-            return start;
-        }
+        State initial_state() { return *start_; }
 
         // Evaluate a node with a control
         void next_state(State& state, const Control& control, const float time_span) {
@@ -65,37 +76,37 @@ using namespace sbmpo;
             // Integrate control into state (Euler)
             float time_increment = time_span / INTEGRATION_SIZE;
             for (int i = 0; i < INTEGRATION_SIZE; i++) {
-                state[0] += cosf(state[2]) * state[3] * time_increment;
-                state[1] += sinf(state[2]) * state[3] * time_increment;
-                state[2] += tanf(state[4]) * state[3] * time_increment * INVERSE_WHEEL_BASE_LENGTH;
-                state[3] += control[0] * time_increment;
-                state[4] += control[1] * time_increment;
+                state[X] += cosf(state[Q]) * state[V] * time_increment;
+                state[Y] += sinf(state[Q]) * state[V] * time_increment;
+                state[Q] += tanf(state[G]) * state[V] * time_increment * INVERSE_WHEEL_BASE_LENGTH;
+                state[V] += control[dVdt] * time_increment;
+                state[G] += control[dGdt] * time_increment;
                 if (!is_valid(state))
                     return;
             }
 
             // Angle wrap
-            while (state[2] >= M_2PI)  state[2] -= M_2PI;
-            while (state[2] < 0)       state[2] += M_2PI;
+            while (state[Q] >= M_2PI)  state[Q] -= M_2PI;
+            while (state[Q] < 0)       state[Q] += M_2PI;
 
         }
 
         // Get the cost of a control
         float cost(const State& state2, const State& state1, const Control& control, const float time_span) {
             float cost_time = time_span;
-            float cost_accel = LIN_ACCELERATION_COST_COEFF * control[0] * time_span;
-            float cost_turn = TURN_ACCELERATION_COST_COEFF * control[1] * time_span; 
-            float cost_obstacles = cost_map(state2[0], state2[1]);
+            float cost_accel = LIN_ACCELERATION_COST_COEFF * control[dVdt] * time_span;
+            float cost_turn = TURN_ACCELERATION_COST_COEFF * control[dGdt] * time_span; 
+            float cost_obstacles = cost_map(state2[X], state2[Y]);
             return cost_time + cost_accel + cost_turn + cost_obstacles;
         }
 
         // Get the heuristic of a state
         float heuristic(const State& state) {
-            float dx = (goal[0] - state[0]) * INVERSE_X_GOAL_THRESHOLD;
-            float dy = (goal[1] - state[1]) * INVERSE_Y_GOAL_THRESHOLD;
-            float dq = (goal[2] - state[2]) * INVERSE_Q_GOAL_THRESHOLD;
-            float dv = (goal[3] - state[3]) * INVERSE_V_GOAL_THRESHOLD;
-            float dg = (goal[4] - state[4]) * INVERSE_G_GOAL_THRESHOLD;
+            float dx = ((*goal_)[X] - state[X]) * INVERSE_X_GOAL_THRESHOLD;
+            float dy = ((*goal_)[Y] - state[Y]) * INVERSE_Y_GOAL_THRESHOLD;
+            float dq = ((*goal_)[Q] - state[Q]) * INVERSE_Q_GOAL_THRESHOLD;
+            float dv = ((*goal_)[V] - state[V]) * INVERSE_V_GOAL_THRESHOLD;
+            float dg = ((*goal_)[G] - state[G]) * INVERSE_G_GOAL_THRESHOLD;
             return sqrt(dx*dx + dy*dy + dq*dq + dv*dv + dg*dg);
         }
 
@@ -106,16 +117,16 @@ using namespace sbmpo;
 
         // Determine if state is valid
         bool is_valid(const State& state) {
-            return  state[0] - X_MAX <= 0 && 
-                    X_MIN - state[0] <= 0 &&
-                    state[1] - Y_MAX <= 0 && 
-                    Y_MIN - state[1] <= 0 &&
-                    state[3] - VELOCITY_MAX <= 0 && 
-                    VELOCITY_MIN - state[3] <= 0 &&
-                    state[4] - TURN_ANGLE_MAX <= 0 && 
-                    TURN_ANGLE_MIN - state[4] <= 0 &&
-                    state[3]*state[3]*INVERSE_WHEEL_BASE_LENGTH*tan(state[2]) - TURN_ACCELERATION_MAX <= 0 &&
-                    map_lookup(map_slice_, state[0], state[1]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
+            return  state[X] - X_MAX <= 0 && 
+                    X_MIN - state[X] <= 0 &&
+                    state[Y] - Y_MAX <= 0 && 
+                    Y_MIN - state[Y] <= 0 &&
+                    state[V] - VELOCITY_MAX <= 0 && 
+                    VELOCITY_MIN - state[V] <= 0 &&
+                    state[G] - TURN_ANGLE_MAX <= 0 && 
+                    TURN_ANGLE_MIN - state[G] <= 0 &&
+                    state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G]) - TURN_ACCELERATION_MAX <= 0 &&
+                    map_lookup(map_slice_, state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
         }
 
         float cost_map(const float x, const float y) {
@@ -133,6 +144,7 @@ using namespace sbmpo;
         private:
 
         nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice_;
+        std::shared_ptr<State> start_, goal_;
 
     };
 
