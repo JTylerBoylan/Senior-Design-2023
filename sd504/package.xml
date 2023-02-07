@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>sd504</name>
+  <version>0.0.0</version>
+  <description>SD T504 LaunchFiles</description>
+  <maintainer email="jboylan@fsu.edu">Jonathan Boylan</maintainer>
+  <license>BSD</license>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>realsense_splitter</depend>
+  <depend>realsense2_camera</depend>
+  <depend>nav_planner</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>

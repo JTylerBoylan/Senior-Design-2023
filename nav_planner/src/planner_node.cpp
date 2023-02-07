@@ -32,11 +32,18 @@ class PlannerNode : public rclcpp::Node {
 			);
 
 			// Create local planner object
+			global_car_model_ = std::make_shared<senior_design::CarModelGlobal>(slice_);
+
+			// Create local planner object
 			local_car_model_ = std::make_shared<senior_design::CarModelLocal>(slice_);
 
-			// Start planner loop
-			timer_ = this->create_wall_timer(500ms,
-				std::bind(&PlannerNode::timer_callback, this));
+			// Start global planner loop
+			timer_global_ = this->create_wall_timer(500ms,
+				std::bind(&PlannerNode::global_planner_callback, this));
+
+			// Start local planner loop
+			timer_local_ = this->create_wall_timer(100ms,
+				std::bind(&PlannerNode::local_planner_callback, this));
 
 		}
 
@@ -50,15 +57,22 @@ class PlannerNode : public rclcpp::Node {
 			odom_ = odom;
 		}
 
-		void timer_callback() {
+		void global_planner_callback() {
 			/*
-				RUN PLANNER
+				RUN GLOBAL PLANNER
+			*/
+		}
+
+		void local_planner_callback() {
+			/*
+				RUN LOCAL PLANNER
 			*/
 		}
 
 		rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 		rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
-		rclcpp::TimerBase::SharedPtr timer_;
+		rclcpp::TimerBase::SharedPtr timer_local_;
+		rclcpp::TimerBase::SharedPtr timer_global_;
 
 		geometry_msgs::msg::Point::ConstSharedPtr goal_;
 		nav_msgs::msg::Odometry::ConstSharedPtr odom_;
