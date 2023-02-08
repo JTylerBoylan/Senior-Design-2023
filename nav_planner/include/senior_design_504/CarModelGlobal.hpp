@@ -2,9 +2,7 @@
 #define SD_GLOBAL_CAR_MODEL_SBMPO_HPP
 
 #include "sbmpo/model.hpp"
-#include "senior_design_504/sd_util.hpp"
-#include "nvblox_msgs/msg/distance_map_slice.hpp"
-#include "nav_msgs/msg/odometry.hpp"
+#include "senior_design_504/NavigationUtil.hpp"
 
 #define M_2PI 6.283185307179586f
 
@@ -44,20 +42,25 @@ using namespace sbmpo;
         const float GOAL_THRESHOLD_FACTOR = 1.0; // m
         
         // Constructor
-        CarModelGlobal(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice) {
-            map_slice_ = map_slice;
-            start_ = std::make_shared<State>(NUM_STATES);
-            goal_ = std::make_shared<State>(NUM_CONTROLS);
+        CarModelGlobal(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<NavigationUtil> nav_util) {
+            node_ = node;
+            nav_util_ = nav_util;
+            /*
+                TODO: Parameters
+            */
         }
 
-        // Get start state pointer
-        std::shared_ptr<State> start_state() { return start_; }
+        // Get parameters
+        Parameters parameters() { return parameters_; }
 
-        // Get goal state pointer
-        std::shared_ptr<State> goal_state() { return goal_; }
+        // Update start and goal points
+        void update() {
+            start_ = nav_util_->current_state_XY();
+            goal_ = nav_util_->goal_state_XY();
+        }
 
         // Return initial state
-        State initial_state() { return *start_; }
+        State initial_state() { return start_; }
 
         // Evaluate a node with a control
         void next_state(State& state, const Control& control, const float time_span) {
@@ -82,8 +85,8 @@ using namespace sbmpo;
 
         // Get the heuristic of a state
         float heuristic(const State& state) {
-            float dx = ((*goal_)[X] - state[X]) * INVERSE_X_GOAL_THRESHOLD;
-            float dy = ((*goal_)[Y] - state[Y]) * INVERSE_Y_GOAL_THRESHOLD;
+            float dx = (goal_[X] - state[X]) * INVERSE_X_GOAL_THRESHOLD;
+            float dy = (goal_[Y] - state[Y]) * INVERSE_Y_GOAL_THRESHOLD;
             return sqrt(dx*dx + dy*dy);
         }
 
@@ -98,12 +101,12 @@ using namespace sbmpo;
                     X_MIN - state[X] <= 0 &&
                     state[Y] - Y_MAX <= 0 && 
                     Y_MIN - state[Y] <= 0 &&
-                    map_lookup(map_slice_, state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
+                    nav_util_->map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
         }
 
         float cost_map(const float x, const float y) {
 
-            float distance = map_lookup(map_slice_, x, y);
+            float distance = nav_util_->map_lookup(x, y);
 
             // Check if valid lookup
             if (distance == INVALID_DISTANCE)
@@ -115,8 +118,11 @@ using namespace sbmpo;
 
         private:
 
-        nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice_;
-        std::shared_ptr<State> start_, goal_;
+        std::shared_ptr<rclcpp::Node> node_;
+        std::shared_ptr<NavigationUtil> nav_util_;
+
+        State start_, goal_;
+        Parameters parameters_;
 
     };
 

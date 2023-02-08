@@ -3,7 +3,7 @@
 
 #include "senior_design_504/CarModelLocal.hpp"
 #include "senior_design_504/CarModelGlobal.hpp"
-#include "senior_design_504/sd_util.hpp"
+#include "senior_design_504/NavigationUtil.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
@@ -17,39 +17,6 @@ class PlannerNode : public rclcpp::Node {
 	public:
 
 		PlannerNode() : Node("planner_node") {
-
-			// Create global planner object
-			global_car_model_ = std::make_shared<CarModelGlobal>(slice_);
-
-			// Global params
-			global_update_rate_ = declare_parameter<int>("global_update_rate") * 1ms;
-			global_params_.max_iterations = declare_parameter<int>("global_max_iterations");
-			global_params_.max_generations = declare_parameter<int>("global_max_generations");
-			global_params_.sample_time = declare_parameter<float>("global_sample_time");
-			global_params_.grid_states = declare_parameter<std::vector<bool>>("global_grid_states");
-			std::vector<double> global_resolution = declare_parameter<std::vector<double>>("global_grid_resolution");
-			global_params_.grid_resolution = std::vector<float>(global_resolution.begin(), global_resolution.end());
-			std::vector<double> global_controls = declare_parameter<std::vector<double>>("global_controls");
-			global_params_.samples = array_to_controls(global_controls, global_car_model_->NUM_CONTROLS);
-
-
-			// Create local planner object
-			local_car_model_ = std::make_shared<CarModelLocal>(slice_);
-
-			// Local params
-			local_update_rate_ = declare_parameter<int>("local_update_rate") * 1ms;
-			local_params_.max_iterations = declare_parameter<int>("local_max_iterations");
-			local_params_.max_generations = declare_parameter<int>("local_max_generations");
-			local_params_.sample_time = declare_parameter<float>("local_sample_time");
-			local_params_.grid_states = declare_parameter<std::vector<bool>>("local_grid_states");
-			std::vector<double> local_resolution = declare_parameter<std::vector<double>>("local_grid_resolution");
-			local_params_.grid_resolution = std::vector<float>(local_resolution.begin(), local_resolution.end());
-			std::vector<double> local_controls = declare_parameter<std::vector<double>>("local_controls");
-			local_params_.samples = array_to_controls(local_controls, local_car_model_->NUM_CONTROLS);
-
-			// Global plan point to give as local goal
-			global_plan_div_point_ = declare_parameter<int>("global_plan_div_point");
-
 
 			// Create distance map subscriber
 			slice_sub_ = this->create_subscription<nvblox_msgs::msg::DistanceMapSlice>(
@@ -65,6 +32,21 @@ class PlannerNode : public rclcpp::Node {
 				std::bind(&PlannerNode::odometry_callback, this, std::placeholders::_1)
 			);
 
+			// Create goal point subscriber
+			goal_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
+				"/nav/goal", // Topic
+				1, // Queue size
+				std::bind(&PlannerNode::goal_point_callback, this, std::placeholders::_1)
+			);
+
+			// Create Navigation Util
+			nav_util_ = std::make_shared<NavigationPlanner>(map_slice_, odom_, goal_);
+
+			// Create global planner object
+			global_car_model_ = std::make_shared<CarModelGlobal>(this, nav_util_);
+
+			// Create local planner object
+			local_car_model_ = std::make_shared<CarModelLocal>(this, nav_util_);
 
 			// Start global planner loop
 			timer_global_ = this->create_wall_timer(500ms,
@@ -74,57 +56,54 @@ class PlannerNode : public rclcpp::Node {
 			timer_local_ = this->create_wall_timer(100ms,
 				std::bind(&PlannerNode::local_planner_callback, this));
 
-
 			RCLCPP_INFO(this->get_logger(), "Planner node initialized.");
 		}
 
 	private:
 
 		void map_slice_callback(const nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice) {
-			slice_ = slice;
+			map_slice_ = slice;
 		}
 
 		void odometry_callback(const nav_msgs::msg::Odometry::ConstSharedPtr odom) {
 			odom_ = odom;
 		}
 
+		void goal_point_callback(const geometry_msgs::msg::Point::ConstSharedPtr goal) {
+			goal_ = goal;
+		}
+
 		void global_planner_callback() {
-			/*
-				RUN GLOBAL PLANNER
-			*/
-			// Set start & goal
-			// Run
+			global_car_model_->update();
+			global_sbmpo_->run(*global_car_model_, global_car_model_->parameters());
 		}
 
 		void local_planner_callback() {
-			/*
-				RUN LOCAL PLANNER
-			*/
-			// Set start & goal
-			// Run
+			local_car_model_->update();
+			local_sbmpo_->run(*local_car_model_, local_car_model_->parameters());
 		}
 
 		// ROS Subscribers
 		rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 		rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
+		rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr point_sub_;
 
 		// ROS Timers
-		rclcpp::TimerBase::SharedPtr timer_local_;
-		rclcpp::TimerBase::SharedPtr timer_global_;
+		rclcpp::TimerBase::SharedPtr timer_local_, timer_global_;
 
-		// ROS Msg variables
-		geometry_msgs::msg::Point::ConstSharedPtr goal_;
-		nav_msgs::msg::Odometry::ConstSharedPtr odom_;
-		nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice_;
+		nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice_;
+    	nav_msgs::msg::Odometry::ConstSharedPtr odom_;
+    	geometry_msgs::msg::Point::ConstSharedPtr goal_;
 
 		// Planner models
 		std::shared_ptr<CarModelGlobal> global_car_model_;
 		std::shared_ptr<CarModelLocal> local_car_model_;
 
-		// Parameters
-		std::chrono::milliseconds global_update_rate_, local_update_rate_;
-		sbmpo::Parameters global_params_, local_params_;
-		int global_plan_div_point_;
+		// Navigation Util
+		std::shared_ptr<NavigationUtil> nav_util_;
+
+		// SBMPO classes
+		std::shared_ptr<SBMPO> local_sbmpo_, global_sbmpo_;
 
 };
 
