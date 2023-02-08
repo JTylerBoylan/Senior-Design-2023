@@ -2,7 +2,7 @@
 #define SD_LOCAL_CAR_MODEL_SBMPO_HPP
 
 #include "sbmpo/model.hpp"
-#include "senior_design_504/map_slice_util.hpp"
+#include "senior_design_504/sd_util.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
