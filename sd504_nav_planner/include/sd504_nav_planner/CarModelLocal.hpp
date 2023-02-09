@@ -1,8 +1,8 @@
-#ifndef SD_GLOBAL_CAR_MODEL_SBMPO_HPP
-#define SD_GLOBAL_CAR_MODEL_SBMPO_HPP
+#ifndef SD_LOCAL_CAR_MODEL_SBMPO_HPP
+#define SD_LOCAL_CAR_MODEL_SBMPO_HPP
 
 #include "sbmpo/model.hpp"
-#include "senior_design_504/NavigationUtil.hpp"
+#include "sd504_nav_planner/NavigationUtil.hpp"
 
 #define M_2PI 6.283185307179586f
 
@@ -10,20 +10,21 @@ namespace senior_design {
 
 using namespace sbmpo;
 
-    class CarModelGlobal : public Model {
+    class CarModelLocal : public Model {
 
         public:
-        
+
         // States used for this model
-        const int NUM_STATES = 2;
-        enum STATES {X, Y};
+        const int NUM_STATES = 5;
+        enum STATES {X, Y, Q, V, G};
 
         // Controls used for this model
         const int NUM_CONTROLS = 2;
-        enum CONTROLS {dXdt, dYdt};
+        enum CONTROLS {dVdt, dGdt};
 
         // Parameters
         const int INTEGRATION_SIZE = 5;
+        const float INVERSE_WHEEL_BASE_LENGTH = 2.0; // m
 
         // Constraints
         const float MIN_DISTANCE_TO_OBSTACLES = 1.0f; // m
@@ -31,18 +32,28 @@ using namespace sbmpo;
         const float X_MIN = -100; // m
         const float Y_MAX = 100; // m
         const float Y_MIN = -100; // m
+        const float VELOCITY_MAX = 2.5; // m/s
+        const float VELOCITY_MIN = 0; // m/s
+        const float TURN_ANGLE_MAX = M_PI / 6.0; // rad
+        const float TURN_ANGLE_MIN = M_PI / 6.0; // rad
+        const float TURN_ACCELERATION_MAX = 5.0; // m/s^2
 
         // Costs
+        const float LIN_ACCELERATION_COST_COEFF = 0; // s^2/m
+        const float TURN_ACCELERATION_COST_COEFF = 0; // s/rad
         const float OBSTACLE_COST_COEFF_A = -10; // m^-1
         const float OBSTACLE_COST_COEFF_B = 30; // m^-1
 
         // Goal Thresholds
         const float INVERSE_X_GOAL_THRESHOLD = 1.0; // m^-1
         const float INVERSE_Y_GOAL_THRESHOLD = 1.0; // m^-1
+        const float INVERSE_Q_GOAL_THRESHOLD = 6.0 / M_PI; // rad^-1
+        const float INVERSE_V_GOAL_THRESHOLD = 1.0; // s/m
+        const float INVERSE_G_GOAL_THRESHOLD = 6.0 / M_PI; // s/rad
         const float GOAL_THRESHOLD_FACTOR = 1.0; // m
         
         // Constructor
-        CarModelGlobal(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<NavigationUtil> nav_util) {
+        CarModelLocal(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<NavigationUtil> nav_util) {
             node_ = node;
             nav_util_ = nav_util;
             /*
@@ -55,8 +66,8 @@ using namespace sbmpo;
 
         // Update start and goal points
         bool update() {
-            start_ = nav_util_->current_state_XY();
-            goal_ = nav_util_->goal_state_XY();
+            start_ = nav_util_->current_state_XYQVG();
+            goal_ = nav_util_->goal_state_XYQVG();
             return nav_util_->isInitialized();
         }
 
@@ -69,26 +80,38 @@ using namespace sbmpo;
             // Integrate control into state (Euler)
             float time_increment = time_span / INTEGRATION_SIZE;
             for (int i = 0; i < INTEGRATION_SIZE; i++) {
-                state[X] += control[dXdt] * time_increment;
-                state[Y] += control[dYdt] * time_increment;
+                state[X] += cosf(state[Q]) * state[V] * time_increment;
+                state[Y] += sinf(state[Q]) * state[V] * time_increment;
+                state[Q] += tanf(state[G]) * state[V] * time_increment * INVERSE_WHEEL_BASE_LENGTH;
+                state[V] += control[dVdt] * time_increment;
+                state[G] += control[dGdt] * time_increment;
                 if (!is_valid(state))
                     return;
             }
+
+            // Angle wrap
+            while (state[Q] >= M_2PI)  state[Q] -= M_2PI;
+            while (state[Q] < 0)       state[Q] += M_2PI;
 
         }
 
         // Get the cost of a control
         float cost(const State& state2, const State& state1, const Control& control, const float time_span) {
-            float cost_distance = sqrtf(control[dXdt]*control[dXdt] + control[dYdt]*control[dYdt]);
+            float cost_time = time_span;
+            float cost_accel = LIN_ACCELERATION_COST_COEFF * abs(control[dVdt]) * time_span;
+            float cost_turn = TURN_ACCELERATION_COST_COEFF * abs(control[dGdt]) * time_span; 
             float cost_obstacles = cost_map(state2[X], state2[Y]);
-            return cost_distance + cost_obstacles;
+            return cost_time + cost_accel + cost_turn + cost_obstacles;
         }
 
         // Get the heuristic of a state
         float heuristic(const State& state) {
             float dx = (goal_[X] - state[X]) * INVERSE_X_GOAL_THRESHOLD;
             float dy = (goal_[Y] - state[Y]) * INVERSE_Y_GOAL_THRESHOLD;
-            return sqrt(dx*dx + dy*dy);
+            float dq = (goal_[Q] - state[Q]) * INVERSE_Q_GOAL_THRESHOLD;
+            float dv = (goal_[V] - state[V]) * INVERSE_V_GOAL_THRESHOLD;
+            float dg = (goal_[G] - state[G]) * INVERSE_G_GOAL_THRESHOLD;
+            return sqrt(dx*dx + dy*dy + dq*dq + dv*dv + dg*dg);
         }
 
         // Determine if state is goal
@@ -102,6 +125,11 @@ using namespace sbmpo;
                     X_MIN - state[X] <= 0 &&
                     state[Y] - Y_MAX <= 0 && 
                     Y_MIN - state[Y] <= 0 &&
+                    state[V] - VELOCITY_MAX <= 0 && 
+                    VELOCITY_MIN - state[V] <= 0 &&
+                    state[G] - TURN_ANGLE_MAX <= 0 && 
+                    TURN_ANGLE_MIN - state[G] <= 0 &&
+                    state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G]) - TURN_ACCELERATION_MAX <= 0 &&
                     nav_util_->map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
         }
 
@@ -121,7 +149,7 @@ using namespace sbmpo;
 
         std::shared_ptr<rclcpp::Node> node_;
         std::shared_ptr<NavigationUtil> nav_util_;
-
+        
         State start_, goal_;
         Parameters parameters_;
 

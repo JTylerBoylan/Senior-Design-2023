@@ -14,11 +14,12 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nvblox_msgs REQUIRED)
+find_package(sbmpo REQUIRED)
 
 include_directories(include)
 
 add_executable(planner src/planner_node.cpp)
-ament_target_dependencies(planner rclcpp nvblox_msgs)
+ament_target_dependencies(planner rclcpp nvblox_msgs sbmpo)
 
 install(
 	TARGETS planner

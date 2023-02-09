@@ -1,9 +1,9 @@
 #include <math.h>
 #include <chrono>
 
-#include "senior_design_504/CarModelLocal.hpp"
-#include "senior_design_504/CarModelGlobal.hpp"
-#include "senior_design_504/NavigationUtil.hpp"
+#include "sd504_nav_planner/CarModelLocal.hpp"
+#include "sd504_nav_planner/CarModelGlobal.hpp"
+#include "sd504_nav_planner/NavigationUtil.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 

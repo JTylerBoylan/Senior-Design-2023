@@ -2,7 +2,7 @@
 #define SD_NAV_UTIL_HPP
 
 #include <math.h>
-
+#include "rclcpp/rclcpp.hpp"
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "sbmpo/sbmpo.hpp"
