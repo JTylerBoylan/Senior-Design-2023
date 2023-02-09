@@ -26,7 +26,7 @@ using namespace sbmpo;
         }
 
         // Map lookup function
-        float map_lookup(const const float x, const float y) {
+        float map_lookup(const float x, const float y) {
 
             // See if slice exists
             if (map_slice_ == nullptr)

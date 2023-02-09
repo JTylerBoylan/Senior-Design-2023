@@ -42,8 +42,9 @@ using namespace sbmpo;
         const float GOAL_THRESHOLD_FACTOR = 1.0; // m
         
         // Constructor
-        CarModelGlobal(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<NavigationUtil> nav_util) {
-            node_ = node;
+        CarModelGlobal(rclcpp::Node& node, std::shared_ptr<NavigationUtil> nav_util) 
+        : node_(node)
+        {
             nav_util_ = nav_util;
             /*
                 TODO: Parameters
@@ -119,7 +120,7 @@ using namespace sbmpo;
 
         private:
 
-        std::shared_ptr<rclcpp::Node> node_;
+        rclcpp::Node& node_;
         std::shared_ptr<NavigationUtil> nav_util_;
 
         State start_, goal_;

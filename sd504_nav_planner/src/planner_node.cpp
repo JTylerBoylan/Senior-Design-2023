@@ -41,10 +41,10 @@ class PlannerNode : public rclcpp::Node {
 			nav_util_ = std::make_shared<NavigationUtil>(map_slice_, odom_, goal_);
 
 			// Create global planner object
-			global_car_model_ = std::make_shared<CarModelGlobal>(this, nav_util_);
+			global_car_model_ = std::make_shared<CarModelGlobal>(*this, nav_util_);
 
 			// Create local planner object
-			local_car_model_ = std::make_shared<CarModelLocal>(this, nav_util_);
+			local_car_model_ = std::make_shared<CarModelLocal>(*this, nav_util_);
 
 			// Start global planner loop
 			timer_global_ = this->create_wall_timer(500ms,
