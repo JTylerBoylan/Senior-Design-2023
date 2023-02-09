@@ -79,6 +79,9 @@ class PlannerNode : public rclcpp::Node {
 		void local_planner_callback() {
 			if (local_car_model_->update())
 				local_sbmpo_->run(*local_car_model_, local_car_model_->parameters());
+				/*
+					TODO: Motor outputs
+				*/
 		}
 
 		// ROS Subscribers
