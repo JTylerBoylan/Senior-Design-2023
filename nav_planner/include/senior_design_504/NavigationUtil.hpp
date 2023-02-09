@@ -57,19 +57,23 @@ using namespace sbmpo;
         // Convert odometry msg to global state
         State current_state_XY() {
             State state(2);
-            state[0] = odom_->pose.pose.position.x;
-            state[1] = odom_->pose.pose.position.y;
+            if (isInitialized()) {
+                state[0] = odom_->pose.pose.position.x;
+                state[1] = odom_->pose.pose.position.y;
+            }
             return state;
         }
 
         State current_state_XYQVG() {
             State state(5);
-            state[0] = odom_->pose.pose.position.x;
-            state[1] = odom_->pose.pose.position.y;
-            //state[2] = convert odom orientation to yaw
-            state[3] = odom_->twist.twist.linear.x;
-            //state[4] = convert odom ang. twist to ackerman angle
-            // or get from motor encoder data
+            if (isInitialized()) {
+                state[0] = odom_->pose.pose.position.x;
+                state[1] = odom_->pose.pose.position.y;
+                //state[2] = convert odom orientation to yaw
+                state[3] = odom_->twist.twist.linear.x;
+                //state[4] = convert odom ang. twist to ackerman angle
+                // or get from motor encoder data
+            }
             return state;
         }
 
@@ -83,6 +87,12 @@ using namespace sbmpo;
             State state(5);
             // TODO
             return state;
+        }
+
+        bool isInitialized() {
+            return map_slice_ != nullptr
+                    && odom_ != nullptr
+                    && goal_ != nullptr;
         }
 
         private:

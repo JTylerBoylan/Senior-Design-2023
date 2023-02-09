@@ -72,13 +72,13 @@ class PlannerNode : public rclcpp::Node {
 		}
 
 		void global_planner_callback() {
-			global_car_model_->update();
-			global_sbmpo_->run(*global_car_model_, global_car_model_->parameters());
+			if(global_car_model_->update())
+				global_sbmpo_->run(*global_car_model_, global_car_model_->parameters());
 		}
 
 		void local_planner_callback() {
-			local_car_model_->update();
-			local_sbmpo_->run(*local_car_model_, local_car_model_->parameters());
+			if (local_car_model_->update())
+				local_sbmpo_->run(*local_car_model_, local_car_model_->parameters());
 		}
 
 		// ROS Subscribers

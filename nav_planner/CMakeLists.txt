@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(senior_design_504)
+project(sd504_nav_planner)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)

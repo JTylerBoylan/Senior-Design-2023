@@ -54,9 +54,10 @@ using namespace sbmpo;
         Parameters parameters() { return parameters_; }
 
         // Update start and goal points
-        void update() {
+        bool update() {
             start_ = nav_util_->current_state_XY();
             goal_ = nav_util_->goal_state_XY();
+            return nav_util_->isInitialized();
         }
 
         // Return initial state
