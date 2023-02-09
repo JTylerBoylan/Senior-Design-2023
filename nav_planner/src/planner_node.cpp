@@ -6,8 +6,6 @@
 #include "senior_design_504/NavigationUtil.hpp"
 
 #include "rclcpp/rclcpp.hpp"
-#include "nvblox_msgs/msg/distance_map_slice.hpp"
-#include "nav_msgs/msg/odometry.hpp"
 
 using namespace std::chrono_literals;
 using namespace senior_design;
@@ -40,7 +38,7 @@ class PlannerNode : public rclcpp::Node {
 			);
 
 			// Create Navigation Util
-			nav_util_ = std::make_shared<NavigationPlanner>(map_slice_, odom_, goal_);
+			nav_util_ = std::make_shared<NavigationUtil>(map_slice_, odom_, goal_);
 
 			// Create global planner object
 			global_car_model_ = std::make_shared<CarModelGlobal>(this, nav_util_);
@@ -86,7 +84,7 @@ class PlannerNode : public rclcpp::Node {
 		// ROS Subscribers
 		rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 		rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
-		rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr point_sub_;
+		rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr goal_sub_;
 
 		// ROS Timers
 		rclcpp::TimerBase::SharedPtr timer_local_, timer_global_;
@@ -103,7 +101,7 @@ class PlannerNode : public rclcpp::Node {
 		std::shared_ptr<NavigationUtil> nav_util_;
 
 		// SBMPO classes
-		std::shared_ptr<SBMPO> local_sbmpo_, global_sbmpo_;
+		std::shared_ptr<sbmpo::SBMPO> local_sbmpo_, global_sbmpo_;
 
 };
 

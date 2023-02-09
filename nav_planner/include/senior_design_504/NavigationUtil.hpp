@@ -5,7 +5,7 @@
 
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "sbmpo/types.hpp"
+#include "sbmpo/sbmpo.hpp"
 
 namespace senior_design {
 
@@ -57,15 +57,15 @@ using namespace sbmpo;
         // Convert odometry msg to global state
         State current_state_XY() {
             State state(2);
-            state[0] = odom_->pose.position.x;
-            state[1] = odom_->pose.position.y;
+            state[0] = odom_->pose.pose.position.x;
+            state[1] = odom_->pose.pose.position.y;
             return state;
         }
 
         State current_state_XYQVG() {
             State state(5);
-            state[0] = odom_->pose.position.x;
-            state[1] = odom_->pose.position.y;
+            state[0] = odom_->pose.pose.position.x;
+            state[1] = odom_->pose.pose.position.y;
             //state[2] = convert odom orientation to yaw
             state[3] = odom_->twist.twist.linear.x;
             //state[4] = convert odom ang. twist to ackerman angle
@@ -87,7 +87,7 @@ using namespace sbmpo;
 
         private:
 
-        nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice;
+        nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice_;
         nav_msgs::msg::Odometry::ConstSharedPtr odom_;
         geometry_msgs::msg::Point::ConstSharedPtr goal_;
 

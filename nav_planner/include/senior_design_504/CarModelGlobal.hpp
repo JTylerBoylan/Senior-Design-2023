@@ -10,7 +10,7 @@ namespace senior_design {
 
 using namespace sbmpo;
 
-    class CarModelGlobal : Model {
+    class CarModelGlobal : public Model {
 
         public:
         
