@@ -2,3 +2,4 @@
 	path = SBMPO
 	url = git@github.com:JTylerBoylan/SBMPO.git
 	branch = ros2-sd
+	update = rebase
