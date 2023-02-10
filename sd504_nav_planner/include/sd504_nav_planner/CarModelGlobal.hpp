@@ -80,7 +80,7 @@ using namespace sbmpo;
 
         // Get the cost of a control
         float cost(const State& state2, const State& state1, const Control& control, const float time_span) {
-            float cost_distance = sqrtf(control[dXdt]*control[dXdt] + control[dYdt]*control[dYdt]);
+            float cost_distance = sqrtf(control[dXdt]*control[dXdt] + control[dYdt]*control[dYdt]) * time_span;
             float cost_obstacles = cost_map(state2[X], state2[Y]);
             return cost_distance + cost_obstacles;
         }
