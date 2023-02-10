@@ -12,7 +12,9 @@ namespace senior_design {
 using namespace sbmpo;
 
     const float INVALID_DISTANCE = -1.0f;
-    const float WHEEL_BASE_LENGTH = 1.0f;
+    float WHEEL_BASE_LENGTH = 1.0f;
+    float SAMPLE_TIME = 1.0f;
+    int GLOBAL_DIV_POINT = 4;
 
     class NavigationUtil {
 
@@ -88,10 +90,23 @@ using namespace sbmpo;
         }
 
         State goal_state_XYQVG() {
+            int plan_size = global_state_plan_.size();
+            if (plan_size < 2)
+                return State(0);
+            bool shrt = plan_size + 1 <= GLOBAL_DIV_POINT;
+            int ref = shrt ? plan_size - 1: GLOBAL_DIV_POINT;
             State state(5);
-            if (local_state_plan_.empty() && !local_control_plan_.empty()) {
-                
-            }
+            State ref_state = local_state_plan_[ref];
+            State ref_state_back = local_state_plan_[ref-1];
+            State ref_state_for = shrt ? State(0) : local_state_plan_[ref+1];
+            Control ref_control = global_state_plan_[ref];
+            state[0] = ref_state[0];
+            state[1] = ref_state[1];
+            float theta_i1 = atan2(ref_state[1] - ref_state_back[1], ref_state[0] - ref_state_back[0]);
+            float theta_i2 = shrt ? theta_i1 : atan2(ref_state_for[1] - ref_state[1], ref_state_for[0] - ref_state[0]);
+            state[2] = 0.5f * (theta_i1 + theta_i2);
+            state[3] = sqrtf(ref_control[0]*ref_control[0] + ref_control[1]*ref_control[1]);
+            state[4] = rotation_to_ackermann((theta_i2-theta_i1)/SAMPLE_TIME,state[3],WHEEL_BASE_LENGTH);
             return state;
         }
 
