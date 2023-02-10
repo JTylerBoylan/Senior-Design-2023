@@ -93,8 +93,8 @@ class PlannerNode : public rclcpp::Node {
 		rclcpp::TimerBase::SharedPtr timer_local_, timer_global_;
 
 		nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice_;
-    	nav_msgs::msg::Odometry::ConstSharedPtr odom_;
-    	geometry_msgs::msg::Point::ConstSharedPtr goal_;
+		nav_msgs::msg::Odometry::ConstSharedPtr odom_;
+		geometry_msgs::msg::Point::ConstSharedPtr goal_;
 
 		// Planner models
 		std::shared_ptr<CarModelGlobal> global_car_model_;
