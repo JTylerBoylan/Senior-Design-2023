@@ -20,13 +20,7 @@ using namespace sbmpo;
 
         public:
 
-        NavigationUtil(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr nvblox_map_slice,
-                        nav_msgs::msg::Odometry::ConstSharedPtr odometry,
-                        geometry_msgs::msg::Point::ConstSharedPtr goal_point) {
-            map_slice_ = nvblox_map_slice;
-            odom_ = odometry;
-            goal_ = goal_point;
-        }
+        NavigationUtil() {}
 
         // Map lookup function
         float map_lookup(const float x, const float y) {
@@ -114,6 +108,18 @@ using namespace sbmpo;
             return map_slice_ != nullptr
                     && odom_ != nullptr
                     && goal_ != nullptr;
+        }
+
+        void update_map_slice(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr nvblox_map_slice) {
+            map_slice_ = nvblox_map_slice;
+        }
+
+        void update_odometry(nav_msgs::msg::Odometry::ConstSharedPtr odometry) {
+            odom_ = odometry;
+        }
+
+        void update_goal_point(geometry_msgs::msg::Point::ConstSharedPtr goal_point) {
+            goal_ = goal_point;
         }
 
         void update_local(SBMPO sbmpo) {

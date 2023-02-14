@@ -69,6 +69,8 @@ using namespace sbmpo;
         bool update() {
             start_ = nav_util_->current_state_XYQVG();
             goal_ = nav_util_->goal_state_XYQVG();
+            if (goal_.empty())
+                return false;
             return nav_util_->isInitialized();
         }
 

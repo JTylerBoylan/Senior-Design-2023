@@ -1,5 +1,6 @@
 #include <math.h>
 #include <chrono>
+#include <ctime>
 
 #include "sd504_nav_planner/CarModelLocal.hpp"
 #include "sd504_nav_planner/CarModelGlobal.hpp"
@@ -25,8 +26,8 @@ class PlannerNode : public rclcpp::Node {
 
 			// Create odometry subscriber
 			odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-				"/nvblox_node/visual_slam/tracking/odometry", // Topic
-				1, // Queue size
+				"/visual_slam/tracking/odometry", // Topic
+				10, // Queue size
 				std::bind(&PlannerNode::odometry_callback, this, std::placeholders::_1)
 			);
 
@@ -38,7 +39,10 @@ class PlannerNode : public rclcpp::Node {
 			);
 
 			// Create Navigation Util
-			nav_util_ = std::make_shared<NavigationUtil>(map_slice_, odom_, goal_);
+			nav_util_ = std::make_shared<NavigationUtil>();
+
+			// Create SBMPO objects
+			global_sbmpo_ = std::make_shared<sbmpo::SBMPO>();
 
 			// Create global planner object
 			global_car_model_ = std::make_shared<CarModelGlobal>(*this, nav_util_);
@@ -61,24 +65,42 @@ class PlannerNode : public rclcpp::Node {
 
 		void map_slice_callback(const nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice) {
 			map_slice_ = slice;
+			nav_util_->update_map_slice(slice);
 		}
 
 		void odometry_callback(const nav_msgs::msg::Odometry::ConstSharedPtr odom) {
 			odom_ = odom;
+			nav_util_->update_odometry(odom);
 		}
 
 		void goal_point_callback(const geometry_msgs::msg::Point::ConstSharedPtr goal) {
 			goal_ = goal;
+			nav_util_->update_goal_point(goal);
 		}
 
 		void global_planner_callback() {
-			if(global_car_model_->update())
-				global_sbmpo_->run(*global_car_model_, global_car_model_->parameters());
+			if(!global_car_model_->update()) {
+				RCLCPP_INFO(this->get_logger(), "Global not initialized.");
+				return;
+			}
+			RCLCPP_INFO(this->get_logger(), "Running global planner...");
+			std::clock_t clockStart = std::clock();
+			global_sbmpo_->run(*global_car_model_, global_car_model_->parameters());
+			std::clock_t clockEnd = std::clock();
+			//nav_util_->update_global(*global_sbmpo_);
+			RCLCPP_INFO(this->get_logger(), "Global Path:");
+			for (sbmpo::State state : global_sbmpo_->state_path()) {
+				RCLCPP_INFO(this->get_logger(), "X: %.2f, Y: %.2f", state[0], state[1]);
+			}
+			RCLCPP_INFO(this->get_logger(), "Ran in %.5f ms", float(clockEnd - clockStart) / CLOCKS_PER_SEC * 1000);
 		}
 
 		void local_planner_callback() {
-			if (local_car_model_->update())
-				local_sbmpo_->run(*local_car_model_, local_car_model_->parameters());
+			if (!local_car_model_->update())
+				return;
+			RCLCPP_INFO(this->get_logger(), "Running local planner...");
+			local_sbmpo_->run(*local_car_model_, local_car_model_->parameters());
+			nav_util_->update_local(*local_sbmpo_);
 				/*
 					TODO: Motor outputs
 				*/

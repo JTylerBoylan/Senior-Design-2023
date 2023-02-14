@@ -46,9 +46,21 @@ using namespace sbmpo;
         : node_(node)
         {
             nav_util_ = nav_util;
-            /*
-                TODO: Parameters
-            */
+            parameters_.grid_resolution = {0.1, 0.1};
+            parameters_.grid_states = {true, true};
+            parameters_.max_generations = 100;
+            parameters_.max_iterations = 1000000;
+            parameters_.sample_time = 1;
+            parameters_.samples = {
+                {1, 0},
+                {-1, 0},
+                {0, 1},
+                {0, -1},
+                {1, 1},
+                {1, -1},
+                {-1, 1},
+                {-1, -1}
+            };
         }
 
         // Get parameters
@@ -62,7 +74,9 @@ using namespace sbmpo;
         }
 
         // Return initial state
-        State initial_state() { return start_; }
+        State initial_state() { 
+            return start_; 
+        }
 
         // Evaluate a node with a control
         void next_state(State& state, const Control& control, const float time_span) {
