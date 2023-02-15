@@ -58,10 +58,6 @@ using namespace sbmpo;
             goal_ = goal;
         }
 
-        ~CarModelLocal(){
-            delete planner_;
-        }
-
         // Return initial state
         State initial_state() { return start_; }
 

@@ -3,10 +3,14 @@
 
 #include <math.h>
 
+#include "sbmpo/sbmpo.hpp"
+
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
 namespace senior_design {
+
+using namespace sbmpo;
 
     class NavigationUtil {
 
@@ -98,6 +102,45 @@ namespace senior_design {
         // Convert rotation and velocity to steering angle
         static float rotation_to_ackermann(float omega, float v, float L) {
             return atan2(omega*L,v);
+        }
+
+        // Convert global state & control path to a local state path
+        static std::vector<State> XY_path_to_XYQVG_path(const std::vector<State> global_state_path, 
+                                                            const std::vector<Control> global_control_path) {
+
+            std::vector<State> local_state_path(global_state_path.size());
+
+            for (int i = 0; i < global_state_path.size(); i++) {
+
+                bool is_first = i == 0;
+                bool is_last = i == global_state_path.size() - 1;
+
+                State state0 = is_first ? State(0) : global_state_path[i - 1];
+                State state1 = global_state_path[i];
+                State state2 = is_last ? State(0) : global_state_path[i + 1];
+
+                Control control0 = is_first ? Control(0) : global_control_path[i-1];
+                Control control1 = is_last ? Control(0) : global_control_path[i];
+                
+                float theta01 = is_first ? 0.0f : atan2(state1[1] - state0[1], state1[0] - state0[0]);
+                float theta12 = is_last ? theta01 : atan2(state2[1] - state1[1], state2[0] - state1[0]);
+                float theta = is_first ? theta12 : 0.5f * (theta01 + theta12);
+
+                float velocity0 = is_first ? 0.0f : sqrtf(control0[0]*control0[0] + control0[1]*control0[1]);
+                float velocity1 = is_short ? velocity0 : sqrtf(control1[0]*control1[0]+control1[1]*control1[1]);
+                float velocity = is_first ? velocity1 : 0.5f * (velocity0 + velocity1);
+
+                float omega = (theta12 - theta01) / GLOBAL_SAMPLE_TIME;
+
+                local_state_path.push_back({
+                    state1[0], // X
+                    state1[1], // Y
+                    theta, // Q
+                    velocity, // V
+                    rotation_to_ackermann(omega, velocity, WHEEL_BASE_LENGTH) // G
+                });
+            }
+
         }
 
         private:

@@ -2,7 +2,6 @@
 #define SD_NAV_PLANNER_HPP
 
 #include "rclcpp/rclcpp.hpp"
-#include "sbmpo/sbmpo.hpp"
 
 #include "sd504_nav_planner/NavigationUtil.hpp"
 
@@ -133,42 +132,13 @@ using namespace sbmpo;
         }
 
         bool is_local_ready() {
-            return !local_goal().empty();
+            return !global_run_.state_path().empty();
         }
 
         State local_goal() {
-            int plan_size = global_run_.state_path().size();
-            if (plan_size < 2) {
-                return State(0);
-            }
-            
-            bool is_short = GLOBAL_DIV_POINT + 1 >= plan_size;
-            int ref_index = is_short ? plan_size - 1 : GLOBAL_DIV_POINT;
-            
-            State ref_state = global_run_.state_path()[ref_index];
-            State ref_state_back = global_run_.state_path()[ref_index - 1];
-            State ref_state_for = is_short ? State(0) : global_run_.state_path()[ref_index + 1];
-
-            Control ref_control = global_run_.control_path()[ref_index-1];
-            Control ref_control_for = is_short ? Control(0) : global_run_.control_path()[ref_index];
-            
-            float theta_i1 = atan2(ref_state[1] - ref_state_back[1], ref_state[0] - ref_state_back[0]);
-            float theta_i2 = is_short ? theta_i1 : atan2(ref_state_for[1] - ref_state[1], ref_state_for[0] - ref_state[0]);
-            float theta = 0.5f * (theta_i1 + theta_i2);
-
-            float velocity_i1 = sqrtf(ref_control[0]*ref_control[0] + ref_control[1]*ref_control[1]);
-            float velocity_i2 = is_short ? velocity_i1 : sqrtf(ref_control_for[0]*ref_control_for[0]+ref_control_for[1]*ref_control[1]);
-            float velocity = 0.5f * (velocity_i1 + velocity_i2);
-
-            float omega = (theta_i2 - theta_i1) / GLOBAL_SAMPLE_TIME;
-
-            return {
-                ref_state[0], // X
-                ref_state[1], // Y
-                theta, // Q
-                velocity, // V
-                rotation_to_ackermann(omega, velocity, WHEEL_BASE_LENGTH) // G
-            };
+            std::vector<State> xyqvg_path = NavigationUtil::XY_path_to_XYQVG_path(global_run_.state_path(), global_run_.control_path());
+            int div_idx = xyqvg_path.size() <= GLOBAL_DIV_POINT ? xyqvg_path.size() - 1 : GLOBAL_DIV_POINT;
+            return xyqvg_path[div_idx];
         }
 
     };
