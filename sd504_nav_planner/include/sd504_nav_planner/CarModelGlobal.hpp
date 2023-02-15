@@ -42,35 +42,18 @@ using namespace sbmpo;
         const float GOAL_THRESHOLD_FACTOR = 1.0; // m
         
         // Constructor
-        CarModelGlobal(rclcpp::Node& node, std::shared_ptr<NavigationUtil> nav_util) 
-        : node_(node)
-        {
-            nav_util_ = nav_util;
-            parameters_.grid_resolution = {0.1, 0.1};
-            parameters_.grid_states = {true, true};
-            parameters_.max_generations = 100;
-            parameters_.max_iterations = 1000000;
-            parameters_.sample_time = 1;
-            parameters_.samples = {
-                {1, 0},
-                {-1, 0},
-                {0, 1},
-                {0, -1},
-                {1, 1},
-                {1, -1},
-                {-1, 1},
-                {-1, -1}
-            };
+        CarModelGlobal(NavigationPlanner &planner) {
+            planner_ = planner;
         }
 
-        // Get parameters
-        Parameters parameters() { return parameters_; }
+        // Update start state
+        void set_initial_state(State start) {
+            start_ = start;
+        }
 
-        // Update start and goal points
-        bool update() {
-            start_ = nav_util_->current_state_XY();
-            goal_ = nav_util_->goal_state_XY();
-            return nav_util_->isInitialized();
+        // Update goal state
+        void set_goal_state(State goal) {
+            goal_ = goal;
         }
 
         // Return initial state
@@ -117,7 +100,7 @@ using namespace sbmpo;
                     X_MIN - state[X] <= 0 &&
                     state[Y] - Y_MAX <= 0 && 
                     Y_MIN - state[Y] <= 0 &&
-                    nav_util_->map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
+                    planner_->map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
         }
 
         float cost_map(const float x, const float y) {
@@ -134,11 +117,8 @@ using namespace sbmpo;
 
         private:
 
-        rclcpp::Node& node_;
-        std::shared_ptr<NavigationUtil> nav_util_;
-
+        NavigationPlanner &planner_;
         State start_, goal_;
-        Parameters parameters_;
 
     };
 

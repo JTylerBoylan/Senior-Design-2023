@@ -53,25 +53,18 @@ using namespace sbmpo;
         const float GOAL_THRESHOLD_FACTOR = 1.0; // m
         
         // Constructor
-        CarModelLocal(rclcpp::Node& node, std::shared_ptr<NavigationUtil> nav_util) 
-        : node_(node)
-        {
-            nav_util_ = nav_util;
-            /*
-                TODO: Parameters
-            */
+        CarModelLocal(NavigationPlanner& planner) {
+            planner_ = planner
         }
 
-        // Get parameters
-        Parameters parameters() { return parameters_; }
+        // Update start state
+        void set_initial_state(State start) {
+            start_ = start;
+        }
 
-        // Update start and goal points
-        bool update() {
-            start_ = nav_util_->current_state_XYQVG();
-            goal_ = nav_util_->goal_state_XYQVG();
-            if (goal_.empty())
-                return false;
-            return nav_util_->isInitialized();
+        // Update goal state
+        void set_goal_state(State goal) {
+            goal_ = goal;
         }
 
         // Return initial state
@@ -133,7 +126,7 @@ using namespace sbmpo;
                     state[G] - TURN_ANGLE_MAX <= 0 && 
                     TURN_ANGLE_MIN - state[G] <= 0 &&
                     state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G]) - TURN_ACCELERATION_MAX <= 0 &&
-                    nav_util_->map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
+                    planner_->map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
         }
 
         float cost_map(const float x, const float y) {
@@ -150,11 +143,8 @@ using namespace sbmpo;
 
         private:
 
-        rclcpp::Node& node_;
-        std::shared_ptr<NavigationUtil> nav_util_;
-        
+        NavigationPlanner &planner_;  
         State start_, goal_;
-        Parameters parameters_;
 
     };
 
