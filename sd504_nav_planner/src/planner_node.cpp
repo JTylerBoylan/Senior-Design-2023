@@ -4,7 +4,7 @@
 
 #include "sd504_nav_planner/CarModelLocal.hpp"
 #include "sd504_nav_planner/CarModelGlobal.hpp"
-#include "sd504_nav_planner/NavigationUtil.hpp"
+#include "sd504_nav_planner/NavigationPlanner.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -55,15 +55,15 @@ class PlannerNode : public rclcpp::Node {
 	private:
 
 		void map_slice_callback(const nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice) {
-			planner_->update_map_slice(slice);
+			NavigationUtil::distance_map_slice = slice;
 		}
 
 		void odometry_callback(const nav_msgs::msg::Odometry::ConstSharedPtr odom) {
-			planner_->update_odometry(odom);
+			NavigationUtil::odometry = odom;
 		}
 
 		void goal_point_callback(const geometry_msgs::msg::Point::ConstSharedPtr goal) {
-			planner_->update_goal_point(goal);
+			NavigationUtil::goal_point = goal;
 		}
 
 		void global_planner_callback() {

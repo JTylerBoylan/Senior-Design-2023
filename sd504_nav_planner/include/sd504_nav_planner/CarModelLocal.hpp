@@ -53,18 +53,13 @@ using namespace sbmpo;
         const float GOAL_THRESHOLD_FACTOR = 1.0; // m
         
         // Constructor
-        CarModelLocal(NavigationPlanner& planner) {
-            planner_ = planner
-        }
-
-        // Update start state
-        void set_initial_state(State start) {
+        CarModelLocal(State start, State goal) {
             start_ = start;
+            goal_ = goal;
         }
 
-        // Update goal state
-        void set_goal_state(State goal) {
-            goal_ = goal;
+        ~CarModelLocal(){
+            delete planner_;
         }
 
         // Return initial state
@@ -126,12 +121,12 @@ using namespace sbmpo;
                     state[G] - TURN_ANGLE_MAX <= 0 && 
                     TURN_ANGLE_MIN - state[G] <= 0 &&
                     state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G]) - TURN_ACCELERATION_MAX <= 0 &&
-                    planner_->map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
+                    NavigationUtil::map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
         }
 
         float cost_map(const float x, const float y) {
 
-            float distance = nav_util_->map_lookup(x, y);
+            float distance = NavigationUtil::map_lookup(x, y);
 
             // Check if valid lookup
             if (distance == INVALID_DISTANCE)
@@ -143,7 +138,6 @@ using namespace sbmpo;
 
         private:
 
-        NavigationPlanner &planner_;  
         State start_, goal_;
 
     };
