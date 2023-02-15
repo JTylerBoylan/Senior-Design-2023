@@ -49,22 +49,6 @@ namespace senior_design {
             
             return distance;
         }
-        
-        // Convert quaternion msg to theta
-        static float quaternion_to_pitch(geometry_msgs::msg::Quaternion quat){
-            double w = quat.w;
-            double x = quat.x;
-            double y = quat.y;
-            double z = quat.z;
-            double siny_cosp = 2 * (w * z + x * y);
-            double cosy_cosp = 1 - 2 * (y * y + z * z);
-            return atan2(siny_cosp, cosy_cosp);
-        }
-
-        // Convert rotation and velocity to steering angle
-        static float rotation_to_ackermann(float omega, float v, float L) {
-            return atan2(omega*L,v);
-        }
 
         // Convert odometry to x,y coordinates
         static std::vector<float> current_XY() {
@@ -99,8 +83,22 @@ namespace senior_design {
                 /* ^ Think about replacing this with encoder data */
             };
         }
+        
+        // Convert quaternion msg to theta
+        static float quaternion_to_pitch(geometry_msgs::msg::Quaternion quat){
+            double w = quat.w;
+            double x = quat.x;
+            double y = quat.y;
+            double z = quat.z;
+            double siny_cosp = 2 * (w * z + x * y);
+            double cosy_cosp = 1 - 2 * (y * y + z * z);
+            return atan2(siny_cosp, cosy_cosp);
+        }
 
-        static float 
+        // Convert rotation and velocity to steering angle
+        static float rotation_to_ackermann(float omega, float v, float L) {
+            return atan2(omega*L,v);
+        }
 
         private:
 
