@@ -41,6 +41,9 @@ class PlannerNode : public rclcpp::Node {
 				std::bind(&PlannerNode::goal_point_callback, this, std::placeholders::_1) // Callback function
 			);
 
+			// Create path publisher
+			path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/nav/path/global", 10);
+
 			// Start global planner loop
 			timer_global_ = this->create_wall_timer(500ms,
 				std::bind(&PlannerNode::global_planner_callback, this));
@@ -68,6 +71,7 @@ class PlannerNode : public rclcpp::Node {
 
 		void global_planner_callback() {
 			planner_->run_global();
+			path_pub_->publish(planner_->global_path());
 		}
 
 		void local_planner_callback() {
@@ -78,6 +82,9 @@ class PlannerNode : public rclcpp::Node {
 		rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 		rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
 		rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr goal_sub_;
+
+		// ROS Publishers
+		rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
 
 		// ROS Timers
 		rclcpp::TimerBase::SharedPtr timer_local_, timer_global_;

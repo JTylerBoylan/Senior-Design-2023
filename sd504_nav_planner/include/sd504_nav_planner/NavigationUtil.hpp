@@ -3,10 +3,12 @@
 
 #include <math.h>
 
+#include "rclcpp/rclcpp.hpp"
 #include "sbmpo/sbmpo.hpp"
 
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "nav_msgs/msg/path.hpp"
 
 namespace senior_design {
 
@@ -137,23 +139,48 @@ using namespace sbmpo;
 
                 float omega = (theta12 - theta01) / SAMPLE_TIME;
 
-                local_state_path.push_back({
+                local_state_path[i] = {
                     state1[0], // X
                     state1[1], // Y
                     theta, // Q
                     velocity, // V
                     rotation_to_ackermann(omega, velocity, WHEEL_BASE_LENGTH) // G
-                });
+                };
             }
 
+            return local_state_path;
+        }
+
+        static geometry_msgs::msg::Quaternion yaw_to_quaterion(float yaw) {
+            geometry_msgs::msg::Quaternion quat;
+            quat.x = 0;
+            quat.y = 0;
+            quat.z = sinf(yaw/2.0f);
+            quat.w = cosf(yaw/2.0f);
+            return quat;
         }
 
         static geometry_msgs::msg::Pose convert_XYQVG_state_to_pose(State xyqvg_state) {
             geometry_msgs::msg::Pose pose;
-            /*
-                TODO
-            */
-           return pose;
+            pose.position.x = xyqvg_state[0];
+            pose.position.y = xyqvg_state[1];
+            pose.position.z = 1.0;
+            pose.orientation = yaw_to_quaterion(xyqvg_state[3]);
+            return pose;
+        }
+
+        static nav_msgs::msg::Path convert_XYQVG_path_to_path(std::vector<State> state_path) {
+            nav_msgs::msg::Path path;
+            for (State state : state_path) {
+                geometry_msgs::msg::PoseStamped pose;
+                pose.pose = convert_XYQVG_state_to_pose(state);
+                pose.header.frame_id = "map";
+                pose.header.stamp = rclcpp::Clock().now();
+                path.poses.push_back(pose);
+            }
+            path.header.frame_id = "map";
+            path.header.stamp = rclcpp::Clock().now();
+            return path;
         }
 
         private:

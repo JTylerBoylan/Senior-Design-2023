@@ -4,6 +4,8 @@
 #include "sbmpo/model.hpp"
 #include "sd504_nav_planner/NavigationUtil.hpp"
 
+#include <iostream>
+
 #define M_2PI 6.283185307179586f
 
 namespace senior_design {
@@ -27,15 +29,15 @@ using namespace sbmpo;
         const float INVERSE_WHEEL_BASE_LENGTH = 2.0; // m
 
         // Constraints
-        const float MIN_DISTANCE_TO_OBSTACLES = 1.0f; // m
+        const float MIN_DISTANCE_TO_OBSTACLES = 0.0f; // m
         const float X_MAX = 100; // m
         const float X_MIN = -100; // m
         const float Y_MAX = 100; // m
         const float Y_MIN = -100; // m
-        const float VELOCITY_MAX = 2.5; // m/s
-        const float VELOCITY_MIN = 0; // m/s
-        const float TURN_ANGLE_MAX = M_PI / 6.0; // rad
-        const float TURN_ANGLE_MIN = M_PI / 6.0; // rad
+        const float VELOCITY_MAX = 10.0; // m/s
+        const float VELOCITY_MIN = -10.0; // m/s
+        const float TURN_ANGLE_MAX = M_PI / 4.0; // rad
+        const float TURN_ANGLE_MIN = -M_PI / 4.0; // rad
         const float TURN_ACCELERATION_MAX = 5.0; // m/s^2
 
         // Costs
@@ -116,8 +118,8 @@ using namespace sbmpo;
                     VELOCITY_MIN - state[V] <= 0 &&
                     state[G] - TURN_ANGLE_MAX <= 0 && 
                     TURN_ANGLE_MIN - state[G] <= 0 &&
-                    state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G]) - TURN_ACCELERATION_MAX <= 0 &&
-                    NavigationUtil::map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
+                    abs(state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G])) - TURN_ACCELERATION_MAX <= 0 &&
+                    MIN_DISTANCE_TO_OBSTACLES - NavigationUtil::map_lookup(state[X], state[Y]) <= 0;
         }
 
         float cost_map(const float x, const float y) {
