@@ -10,8 +10,6 @@ namespace senior_design {
 using namespace sbmpo;
 
     // General Parameters
-    const float INVALID_DISTANCE = -1.0f;
-    const float WHEEL_BASE_LENGTH = 1.0f;
     const int GLOBAL_DIV_POINT = 4;
     
     // Global Parameters
@@ -44,8 +42,12 @@ using namespace sbmpo;
 
         public:
 
-        NavigationPlanner(rclcpp::Node &node) {
+        NavigationPlanner(rclcpp::Node * node) {
             node_ = node;
+        }
+
+        ~NavigationPlanner() {
+            delete node_;
         }
 
         void run_global() {
@@ -119,16 +121,16 @@ using namespace sbmpo;
         private:
 
         // Node
-        rclcpp::Node &node_;
+        rclcpp::Node * node_;
 
         // SBMPO Runs
         SBMPORun global_run_;
         SBMPORun local_run_;
 
         bool is_global_ready() {
-            return map_slice_ != nullptr
-                && odom_ != nullptr
-                && goal_ != nullptr;
+            return NavigationUtil::distance_map_slice != nullptr
+                && NavigationUtil::odometry != nullptr
+                && NavigationUtil::goal_point != nullptr;
         }
 
         bool is_local_ready() {

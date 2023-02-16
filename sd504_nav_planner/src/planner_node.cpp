@@ -18,7 +18,7 @@ class PlannerNode : public rclcpp::Node {
 		PlannerNode() : Node("planner_node") {
 
 			// Create Navigation Util
-			planner_ = std::make_shared<NavigationPlanner>();
+			planner_ = std::make_shared<NavigationPlanner>(this);
 
 			// Create distance map subscriber
 			slice_sub_ = this->create_subscription<nvblox_msgs::msg::DistanceMapSlice>(

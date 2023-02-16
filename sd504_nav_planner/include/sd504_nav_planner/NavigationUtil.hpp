@@ -10,7 +10,12 @@
 
 namespace senior_design {
 
+#define INVALID_DISTANCE -1.0f
+
 using namespace sbmpo;
+
+    const float WHEEL_BASE_LENGTH = 1.0f;
+    const float SAMPLE_TIME = 1.0f;
 
     class NavigationUtil {
 
@@ -59,8 +64,8 @@ using namespace sbmpo;
             if (odometry == nullptr)
                 return State(0);
             return {
-                odometry->pose.pose.position.x,
-                odometry->pose.pose.position.y
+                float(odometry->pose.pose.position.x),
+                float(odometry->pose.pose.position.y)
             };
         }
 
@@ -69,8 +74,8 @@ using namespace sbmpo;
             if (goal_point == nullptr)
                 return State(0);
             return {
-                goal_point->x,
-                goal_point->y
+                float(goal_point->x),
+                float(goal_point->y)
             };
         }
 
@@ -79,11 +84,11 @@ using namespace sbmpo;
             if (odometry == nullptr)
                 return State(0);
             return {
-                odometry->pose.pose.position.x,
-                odometry->pose.pose.position.y;
+                float(odometry->pose.pose.position.x),
+                float(odometry->pose.pose.position.y),
                 quaternion_to_pitch(odometry->pose.pose.orientation),
-                odometry->twist.twist.linear.x,
-                rotation_to_ackermann(odometry->twist.twist.angular.z, state[3], WHEEL_BASE_LENGTH)
+                float(odometry->twist.twist.linear.x),
+                rotation_to_ackermann(odometry->twist.twist.angular.z, odometry->twist.twist.linear.x, WHEEL_BASE_LENGTH)
                 /* ^ Think about replacing this with encoder data */
             };
         }
@@ -110,7 +115,7 @@ using namespace sbmpo;
 
             std::vector<State> local_state_path(global_state_path.size());
 
-            for (int i = 0; i < global_state_path.size(); i++) {
+            for (size_t i = 0; i < global_state_path.size(); i++) {
 
                 bool is_first = i == 0;
                 bool is_last = i == global_state_path.size() - 1;
@@ -127,10 +132,10 @@ using namespace sbmpo;
                 float theta = is_first ? theta12 : 0.5f * (theta01 + theta12);
 
                 float velocity0 = is_first ? 0.0f : sqrtf(control0[0]*control0[0] + control0[1]*control0[1]);
-                float velocity1 = is_short ? velocity0 : sqrtf(control1[0]*control1[0]+control1[1]*control1[1]);
+                float velocity1 = is_last ? velocity0 : sqrtf(control1[0]*control1[0]+control1[1]*control1[1]);
                 float velocity = is_first ? velocity1 : 0.5f * (velocity0 + velocity1);
 
-                float omega = (theta12 - theta01) / GLOBAL_SAMPLE_TIME;
+                float omega = (theta12 - theta01) / SAMPLE_TIME;
 
                 local_state_path.push_back({
                     state1[0], // X
@@ -155,7 +160,11 @@ using namespace sbmpo;
 
         NavigationUtil();
 
-    }
+    };
+
+    nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr NavigationUtil::distance_map_slice = nullptr;
+    nav_msgs::msg::Odometry::ConstSharedPtr NavigationUtil::odometry = nullptr;
+    geometry_msgs::msg::Point::ConstSharedPtr NavigationUtil::goal_point = nullptr;
 
 }
 
