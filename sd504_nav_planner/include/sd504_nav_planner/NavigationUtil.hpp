@@ -143,6 +143,14 @@ using namespace sbmpo;
 
         }
 
+        static geometry_msgs::msg::Pose convert_XYQVG_state_to_pose(State xyqvg_state) {
+            geometry_msgs::msg::Pose pose;
+            /*
+                TODO
+            */
+           return pose;
+        }
+
         private:
 
         NavigationUtil();
