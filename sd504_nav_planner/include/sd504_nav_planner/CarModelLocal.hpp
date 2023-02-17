@@ -43,8 +43,8 @@ using namespace sbmpo;
         // Costs
         const float LIN_ACCELERATION_COST_COEFF = 0; // s^2/m
         const float TURN_ACCELERATION_COST_COEFF = 0; // s/rad
-        const float OBSTACLE_COST_COEFF_A = -10; // m^-1
-        const float OBSTACLE_COST_COEFF_B = 30; // m^-1
+        const float OBSTACLE_COST_COEFF_A = -0; // m^-1
+        const float OBSTACLE_COST_COEFF_B = 0; // m^-1
 
         // Goal Thresholds
         const float INVERSE_X_GOAL_THRESHOLD = 1.0; // m^-1
@@ -110,16 +110,16 @@ using namespace sbmpo;
 
         // Determine if state is valid
         bool is_valid(const State& state) {
-            return  state[X] - X_MAX <= 0 && 
-                    X_MIN - state[X] <= 0 &&
-                    state[Y] - Y_MAX <= 0 && 
-                    Y_MIN - state[Y] <= 0 &&
-                    state[V] - VELOCITY_MAX <= 0 && 
-                    VELOCITY_MIN - state[V] <= 0 &&
-                    state[G] - TURN_ANGLE_MAX <= 0 && 
-                    TURN_ANGLE_MIN - state[G] <= 0 &&
-                    abs(state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G])) - TURN_ACCELERATION_MAX <= 0 &&
-                    MIN_DISTANCE_TO_OBSTACLES - NavigationUtil::map_lookup(state[X], state[Y]) <= 0;
+            return  state[X] <= X_MAX && 
+                    state[X] >= X_MIN &&
+                    state[Y] <= Y_MAX && 
+                    state[Y] <= Y_MIN &&
+                    state[V] <= VELOCITY_MAX && 
+                    state[V] >= VELOCITY_MIN &&
+                    state[G] <= TURN_ANGLE_MAX && 
+                    state[G] >= TURN_ANGLE_MIN &&
+                    abs(state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G])) <= TURN_ACCELERATION_MAX &&
+                    NavigationUtil::map_lookup(state[X], state[Y]) >= MIN_DISTANCE_TO_OBSTACLES;
         }
 
         float cost_map(const float x, const float y) {

@@ -84,8 +84,6 @@ using namespace sbmpo;
             local_run_ = SBMPO::run(local_model, local_parameters());
             /* LOCAL PLANNER END */
 
-            RCLCPP_INFO(node_->get_logger(), " Max iters: %d", local_parameters().max_iterations);
-
             // Print results
             RCLCPP_INFO(node_->get_logger(), "Local Plan (%.2f ms):", local_run_.time_us() / 1E3);
             RCLCPP_INFO(node_->get_logger(), "Exit code: %d, Buffer size: %d", int(local_run_.exit_code()), int(local_run_.size()));

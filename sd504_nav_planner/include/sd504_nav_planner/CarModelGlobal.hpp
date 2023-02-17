@@ -26,15 +26,15 @@ using namespace sbmpo;
         const int INTEGRATION_SIZE = 5;
 
         // Constraints
-        const float MIN_DISTANCE_TO_OBSTACLES = 1.0f; // m
+        const float MIN_DISTANCE_TO_OBSTACLES = 0.0f; // m
         const float X_MAX = 100; // m
         const float X_MIN = -100; // m
         const float Y_MAX = 100; // m
         const float Y_MIN = -100; // m
 
         // Costs
-        const float OBSTACLE_COST_COEFF_A = -10; // m^-1
-        const float OBSTACLE_COST_COEFF_B = 30; // m^-1
+        const float OBSTACLE_COST_COEFF_A = -0; // m^-1
+        const float OBSTACLE_COST_COEFF_B = 0; // m^-1
 
         // Goal Thresholds
         const float INVERSE_X_GOAL_THRESHOLD = 1.0; // m^-1
@@ -87,11 +87,11 @@ using namespace sbmpo;
 
         // Determine if state is valid
         bool is_valid(const State& state) {
-            return  state[X] - X_MAX <= 0 && 
-                    X_MIN - state[X] <= 0 &&
-                    state[Y] - Y_MAX <= 0 && 
-                    Y_MIN - state[Y] <= 0 &&
-                    NavigationUtil::map_lookup(state[X], state[Y]) - MIN_DISTANCE_TO_OBSTACLES <= 0;
+            return  state[X] >= X_MAX && 
+                    state[X] <= X_MIN &&
+                    state[Y] <= Y_MAX && 
+                    state[Y] >= Y_MIN &&
+                    NavigationUtil::map_lookup(state[X], state[Y])  >= MIN_DISTANCE_TO_OBSTACLES;
         }
 
         float cost_map(const float x, const float y) {
