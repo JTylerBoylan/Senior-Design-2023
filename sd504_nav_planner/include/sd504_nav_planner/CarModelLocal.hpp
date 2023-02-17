@@ -85,11 +85,11 @@ using namespace sbmpo;
         }
 
         // Get the cost of a control
-        float cost(const State& state2, const State& state1, const Control& control, const float time_span) {
+        float cost(const State& state, const Control& control, const float time_span) {
             float cost_time = time_span;
             float cost_accel = LIN_ACCELERATION_COST_COEFF * abs(control[dVdt]) * time_span;
             float cost_turn = TURN_ACCELERATION_COST_COEFF * abs(control[dGdt]) * time_span; 
-            float cost_obstacles = cost_map(state2[X], state2[Y]);
+            float cost_obstacles = cost_map(state[X], state[Y]);
             return cost_time + cost_accel + cost_turn + cost_obstacles;
         }
 
