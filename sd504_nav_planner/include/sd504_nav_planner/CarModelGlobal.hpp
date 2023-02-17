@@ -87,11 +87,11 @@ using namespace sbmpo;
 
         // Determine if state is valid
         bool is_valid(const State& state) {
-            return  state[X] >= X_MAX && 
-                    state[X] <= X_MIN &&
+            return  state[X] <= X_MAX && 
+                    state[X] >= X_MIN &&
                     state[Y] <= Y_MAX && 
                     state[Y] >= Y_MIN &&
-                    NavigationUtil::map_lookup(state[X], state[Y])  >= MIN_DISTANCE_TO_OBSTACLES;
+                    NavigationUtil::map_lookup(state[X], state[Y])  > MIN_DISTANCE_TO_OBSTACLES;
         }
 
         float cost_map(const float x, const float y) {

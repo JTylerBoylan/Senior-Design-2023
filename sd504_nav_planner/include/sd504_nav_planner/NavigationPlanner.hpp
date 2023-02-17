@@ -57,16 +57,12 @@ using namespace sbmpo;
             // Create global model
             CarModelGlobal global_model(NavigationUtil::current_XY(), NavigationUtil::goal_XY());
 
-            RCLCPP_INFO(node_->get_logger(), "Running global planner...");
-
             /* GLOBAL PLANNER RUN */
             global_run_ = SBMPO::run(global_model, global_parameters());
             /* GLOBAL PLANNER END */
 
             // Print results
-            RCLCPP_INFO(node_->get_logger(), "Global Plan (%lu us):", global_run_.time_us());
-            for (State state : global_run_.state_path()) 
-                RCLCPP_INFO(node_->get_logger(), "  X: %.2f, Y: %.2f, f(x,y): %.2f", state[0], state[1], NavigationUtil::map_lookup(state[0], state[1]));
+            this->print_global_run(global_run_);
         }
 
         void run_local() {
@@ -78,18 +74,12 @@ using namespace sbmpo;
             // Create local model
             CarModelLocal local_model(NavigationUtil::current_XYQVG(), this->local_goal());
 
-            RCLCPP_INFO(node_->get_logger(), "Running local planner...");
-
             /* LOCAL PLANNER RUN */
             local_run_ = SBMPO::run(local_model, local_parameters());
             /* LOCAL PLANNER END */
 
-            // Print results
-            RCLCPP_INFO(node_->get_logger(), "Local Plan (%lu us):", local_run_.time_us());
-            RCLCPP_INFO(node_->get_logger(), "Exit code: %d, Buffer size: %d", int(local_run_.exit_code()), int(local_run_.size()));
-            for (State state : local_run_.state_path()) 
-                RCLCPP_INFO(node_->get_logger(), "  X: %.2f, Y: %.2f, Q: %.2f, V: %.2f, G: %.2f, f(x,y): %.2f", 
-                    state[0], state[1], state[2], state[3], state[4], NavigationUtil::map_lookup(state[0], state[1]));
+            this->print_local_run(local_run_);
+
         }
 
         Parameters global_parameters() {
@@ -145,6 +135,59 @@ using namespace sbmpo;
             std::vector<State> xyqvg_path = NavigationUtil::XY_path_to_XYQVG_path(global_run_.state_path(), global_run_.control_path());
             int div_idx = xyqvg_path.size() <= GLOBAL_DIV_POINT ? xyqvg_path.size() - 1 : GLOBAL_DIV_POINT;
             return xyqvg_path[div_idx];
+        }
+
+        void print_global_run(SBMPORun &run) {
+            RCLCPP_INFO(node_->get_logger(), "----- GLOBAL RUN -----");
+
+            // Print parameters
+            RCLCPP_INFO(node_->get_logger(), "-- Parameters --");
+            this->print_parameters(global_parameters());
+            
+            // Print results
+            RCLCPP_INFO(node_->get_logger(), "-- Results --");
+            this->print_results(run);
+
+            RCLCPP_INFO(node_->get_logger(), "----- ----- -----\n");
+        }
+
+        void print_local_run(SBMPORun &run) {
+            RCLCPP_INFO(node_->get_logger(), "----- LOCAL RUN -----");
+
+            // Print parameters
+            RCLCPP_INFO(node_->get_logger(), "-- Parameters --");
+            this->print_parameters(local_parameters());
+            
+            // Print results
+            RCLCPP_INFO(node_->get_logger(), "-- Results --");
+            this->print_results(run);
+
+            RCLCPP_INFO(node_->get_logger(), "----- ----- -----\n");
+        }
+        
+        void print_parameters(const Parameters &params) {
+            RCLCPP_INFO(node_->get_logger(), " Max Iterations: %d", params.max_iterations);
+            RCLCPP_INFO(node_->get_logger(), " Max Generations: %d", params.max_generations);
+            RCLCPP_INFO(node_->get_logger(), " Sample Time: %.2f", params.sample_time);
+            RCLCPP_INFO(node_->get_logger(), " Number of States: %lu", params.grid_resolution.size());
+            RCLCPP_INFO(node_->get_logger(), " Number of Controls: %lu", params.samples.empty() ? 0 : params.samples[0].size());
+            RCLCPP_INFO(node_->get_logger(), " Number of Samples: %lu", params.samples.size());
+        }
+
+        void print_results(SBMPORun &run) {
+            RCLCPP_INFO(node_->get_logger(), " Exit code: %d", run.exit_code());
+            RCLCPP_INFO(node_->get_logger(), " Time (us): %lu", run.time_us());
+            RCLCPP_INFO(node_->get_logger(), " Buffer Size: %lu", run.size());
+            RCLCPP_INFO(node_->get_logger(), " Path Size: %lu", run.state_path().size());
+            RCLCPP_INFO(node_->get_logger(), " - Path -");
+            int p = 1;
+            for (State state : run.state_path()) {
+                float dist_xy = NavigationUtil::map_lookup(state[0], state[1]);
+                std::string coord = std::to_string(state[0]);
+                for (size_t s = 1; s < state.size(); s++)
+                    coord += ", " + std::to_string(s);
+                RCLCPP_INFO(node_->get_logger(), " (%d) (%s) - f(x,y)= %.2f", p++, coord.c_str(), dist_xy == INVALID_DISTANCE ? -1.0 : dist_xy);
+            }
         }
 
     };

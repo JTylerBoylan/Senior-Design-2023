@@ -20,6 +20,7 @@ using namespace sbmpo;
 
     const float WHEEL_BASE_LENGTH = 1.0f;
     const float SAMPLE_TIME = 1.0f;
+    const float PATH_VISUALIZATION_ELEVATION = 0.0f;
 
     class NavigationUtil {
 
@@ -166,7 +167,7 @@ using namespace sbmpo;
             geometry_msgs::msg::Pose pose;
             pose.position.x = xyqvg_state[0];
             pose.position.y = xyqvg_state[1];
-            pose.position.z = 1.0;
+            pose.position.z = PATH_VISUALIZATION_ELEVATION;
             pose.orientation = yaw_to_quaterion(xyqvg_state[3]);
             return pose;
         }

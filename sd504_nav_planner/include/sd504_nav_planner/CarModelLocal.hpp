@@ -119,7 +119,7 @@ using namespace sbmpo;
                     state[G] <= TURN_ANGLE_MAX && 
                     state[G] >= TURN_ANGLE_MIN &&
                     abs(state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*tan(state[G])) <= TURN_ACCELERATION_MAX &&
-                    NavigationUtil::map_lookup(state[X], state[Y]) >= MIN_DISTANCE_TO_OBSTACLES;
+                    NavigationUtil::map_lookup(state[X], state[Y]) > MIN_DISTANCE_TO_OBSTACLES;
         }
 
         float cost_map(const float x, const float y) {

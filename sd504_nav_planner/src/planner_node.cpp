@@ -49,7 +49,7 @@ class PlannerNode : public rclcpp::Node {
 				std::bind(&PlannerNode::global_planner_callback, this));
 
 			// Start local planner loop
-			timer_local_ = this->create_wall_timer(100ms,
+			timer_local_ = this->create_wall_timer(500ms,
 				std::bind(&PlannerNode::local_planner_callback, this));
 
 			RCLCPP_INFO(this->get_logger(), "Planner node initialized.");
