@@ -93,7 +93,8 @@ using namespace sbmpo;
                 float(odometry->pose.pose.position.y),
                 quaternion_to_pitch(odometry->pose.pose.orientation),
                 float(odometry->twist.twist.linear.x),
-                rotation_to_ackermann(odometry->twist.twist.angular.z, odometry->twist.twist.linear.x, WHEEL_BASE_LENGTH)
+                0.0f
+                // rotation_to_ackermann(odometry->twist.twist.angular.z, odometry->twist.twist.linear.x, WHEEL_BASE_LENGTH)
                 /* ^ Think about replacing this with encoder data */
             };
         }
@@ -184,6 +185,16 @@ using namespace sbmpo;
             path.header.frame_id = "map";
             path.header.stamp = rclcpp::Clock().now();
             return path;
+        }
+
+        static geometry_msgs::msg::PointStamped convert_state_to_point(const State &state) {
+            geometry_msgs::msg::PointStamped point;
+            point.header.frame_id = "map";
+            point.header.stamp = rclcpp::Clock().now();
+            point.point.x = state[0];
+            point.point.y = state[1];
+            point.point.z = PATH_VISUALIZATION_ELEVATION;
+            return point;
         }
 
         private:

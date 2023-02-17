@@ -113,7 +113,7 @@ using namespace sbmpo;
             return  state[X] <= X_MAX && 
                     state[X] >= X_MIN &&
                     state[Y] <= Y_MAX && 
-                    state[Y] <= Y_MIN &&
+                    state[Y] >= Y_MIN &&
                     state[V] <= VELOCITY_MAX && 
                     state[V] >= VELOCITY_MIN &&
                     state[G] <= TURN_ANGLE_MAX && 

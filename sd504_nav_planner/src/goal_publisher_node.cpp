@@ -16,7 +16,7 @@ class GoalPublisher : public rclcpp::Node {
             goal_.point.z = 0.0;
 
 			// Create path publisher
-			goal_pub_ = this->create_publisher<geometry_msgs::msg::PointStamped>("/nav/goal", 10);
+			goal_pub_ = this->create_publisher<geometry_msgs::msg::PointStamped>("/nav/goal/global", 10);
 
 			// Start global planner loop
 			timer_ = this->create_wall_timer(500ms,

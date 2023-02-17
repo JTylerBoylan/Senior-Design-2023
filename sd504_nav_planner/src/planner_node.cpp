@@ -1,12 +1,9 @@
-#include <math.h>
 #include <chrono>
 #include <ctime>
 
 #include "sd504_nav_planner/CarModelLocal.hpp"
 #include "sd504_nav_planner/CarModelGlobal.hpp"
 #include "sd504_nav_planner/NavigationPlanner.hpp"
-
-#include "rclcpp/rclcpp.hpp"
 
 using namespace std::chrono_literals;
 using namespace senior_design;
@@ -36,13 +33,19 @@ class PlannerNode : public rclcpp::Node {
 
 			// Create goal point subscriber
 			goal_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
-				"/nav/goal", // Topic
+				"/nav/goal/global", // Topic
 				10, // Queue size
 				std::bind(&PlannerNode::goal_point_callback, this, std::placeholders::_1) // Callback function
 			);
 
-			// Create path publisher
-			path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/nav/path/global", 10);
+			// Create global path publisher
+			global_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/nav/path/global", 10);
+
+			// Create local path publisher
+			local_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/nav/path/local", 10);
+
+			// create local goal pub
+			local_goal_pub_ = this->create_publisher<geometry_msgs::msg::PointStamped>("/nav/goal/local", 10);
 
 			// Start global planner loop
 			timer_global_ = this->create_wall_timer(500ms,
@@ -70,12 +73,16 @@ class PlannerNode : public rclcpp::Node {
 		}
 
 		void global_planner_callback() {
-			planner_->run_global();
-			path_pub_->publish(planner_->global_path());
+			if (planner_->run_global()) {
+				global_path_pub_->publish(planner_->global_path());
+				local_goal_pub_->publish(planner_->local_goal_point());
+			}
 		}
 
 		void local_planner_callback() {
-			planner_->run_local();
+			if (planner_->run_local()) {
+				local_path_pub_->publish(planner_->local_path());
+			}
 		}
 
 		// ROS Subscribers
@@ -84,7 +91,9 @@ class PlannerNode : public rclcpp::Node {
 		rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr goal_sub_;
 
 		// ROS Publishers
-		rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+		rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_path_pub_;
+		rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr local_path_pub_;
+		rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr local_goal_pub_;
 
 		// ROS Timers
 		rclcpp::TimerBase::SharedPtr timer_local_, timer_global_;

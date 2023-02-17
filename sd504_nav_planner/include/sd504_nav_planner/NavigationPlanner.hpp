@@ -48,11 +48,11 @@ using namespace sbmpo;
             delete node_;
         }
 
-        void run_global() {
+        bool run_global() {
 
             // Check if ready to run
             if (!is_global_ready())
-                return;
+                return false;
 
             // Create global model
             CarModelGlobal global_model(NavigationUtil::current_XY(), NavigationUtil::goal_XY());
@@ -63,23 +63,31 @@ using namespace sbmpo;
 
             // Print results
             this->print_global_run(global_run_);
+
+            return true;
         }
 
-        void run_local() {
+        bool run_local() {
 
             // Check if ready to run
             if (!is_local_ready())
-                return;
+                return false;
 
             // Create local model
             CarModelLocal local_model(NavigationUtil::current_XYQVG(), this->local_goal());
+
+            RCLCPP_INFO(node_->get_logger(), "Running local...");
 
             /* LOCAL PLANNER RUN */
             local_run_ = SBMPO::run(local_model, local_parameters());
             /* LOCAL PLANNER END */
 
+            RCLCPP_INFO(node_->get_logger(), "Finished running...");
+
+            // Print results
             this->print_local_run(local_run_);
 
+            return true;
         }
 
         Parameters global_parameters() {
@@ -110,6 +118,14 @@ using namespace sbmpo;
 
         nav_msgs::msg::Path global_path() {
             return NavigationUtil::convert_XYQVG_path_to_path(NavigationUtil::XY_path_to_XYQVG_path(global_run_.state_path(), global_run_.control_path()));
+        }
+
+        nav_msgs::msg::Path local_path() {
+            return NavigationUtil::convert_XYQVG_path_to_path(local_run_.state_path());
+        }
+
+        geometry_msgs::msg::PointStamped local_goal_point() {
+            return NavigationUtil::convert_state_to_point(local_goal());
         }
 
         private:
@@ -185,7 +201,7 @@ using namespace sbmpo;
                 float dist_xy = NavigationUtil::map_lookup(state[0], state[1]);
                 std::string coord = std::to_string(state[0]);
                 for (size_t s = 1; s < state.size(); s++)
-                    coord += ", " + std::to_string(s);
+                    coord += ", " + std::to_string(state[s]);
                 RCLCPP_INFO(node_->get_logger(), " (%d) (%s) - f(x,y)= %.2f", p++, coord.c_str(), dist_xy == INVALID_DISTANCE ? -1.0 : dist_xy);
             }
         }
