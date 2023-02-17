@@ -14,19 +14,19 @@ using namespace sbmpo;
     const int GLOBAL_MAX_ITERATIONS = 1E4;
     const int GLOBAL_MAX_GENERATIONS = 1E3;
     const float GLOBAL_SAMPLE_TIME = 1.0f;
-    const float GLOBAL_GRID_RESOLUTION = 0.5f;
+    const float GLOBAL_GRID_RESOLUTION = 0.25f;
     const std::vector<State> GLOBAL_SAMPLES = {
         {1,0}, {1,1}, {0,1}, {-1,1},
         {-1,0}, {-1,-1}, {0,-1}, {1,-1}
     };
 
     // Local Parameters
-    const int LOCAL_MAX_ITERATIONS = 1E3;
+    const int LOCAL_MAX_ITERATIONS = 5E3;
     const int LOCAL_MAX_GENERATIONS = 50;
-    const float LOCAL_SAMPLE_TIME = 1.0f;
-    const float LOCAL_GRID_RESOLUTION_XY = 0.1f;
+    const float LOCAL_SAMPLE_TIME = 0.5f;
+    const float LOCAL_GRID_RESOLUTION_XY = 0.25f;
     const float LOCAL_GRID_RESOLUTION_Q = 0.08727f;
-    const float LOCAL_GRID_RESOLUTION_V = 0.25f;
+    const float LOCAL_GRID_RESOLUTION_V = 0.50f;
     const float LOCAL_GRID_RESOLUTION_G = 0.13090f;
     const std::vector<State> LOCAL_SAMPLES = {
         {2.45, 0.436}, {2.45, 0.218}, {2.45, 0}, {2.45, -0.218}, {2.45, -0.436},
@@ -76,13 +76,9 @@ using namespace sbmpo;
             // Create local model
             CarModelLocal local_model(NavigationUtil::current_XYQVG(), this->local_goal());
 
-            RCLCPP_INFO(node_->get_logger(), "Running local...");
-
             /* LOCAL PLANNER RUN */
             local_run_ = SBMPO::run(local_model, local_parameters());
             /* LOCAL PLANNER END */
-
-            RCLCPP_INFO(node_->get_logger(), "Finished running...");
 
             // Print results
             this->print_local_run(local_run_);

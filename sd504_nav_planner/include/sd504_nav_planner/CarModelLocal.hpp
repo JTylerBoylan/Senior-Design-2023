@@ -35,7 +35,7 @@ using namespace sbmpo;
         const float Y_MAX = 100; // m
         const float Y_MIN = -100; // m
         const float VELOCITY_MAX = 10.0; // m/s
-        const float VELOCITY_MIN = -10.0; // m/s
+        const float VELOCITY_MIN = 0.0; // m/s
         const float TURN_ANGLE_MAX = M_PI / 4.0; // rad
         const float TURN_ANGLE_MIN = -M_PI / 4.0; // rad
         const float TURN_ACCELERATION_MAX = 5.0; // m/s^2
