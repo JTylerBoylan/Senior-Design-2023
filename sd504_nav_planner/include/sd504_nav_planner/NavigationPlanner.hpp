@@ -64,9 +64,9 @@ using namespace sbmpo;
             /* GLOBAL PLANNER END */
 
             // Print results
-            RCLCPP_INFO(node_->get_logger(), "Global Plan (%.2f ms):", global_run_.time_us() / 1E3);
+            RCLCPP_INFO(node_->get_logger(), "Global Plan (%lu us):", global_run_.time_us());
             for (State state : global_run_.state_path()) 
-                RCLCPP_INFO(node_->get_logger(), "  X: %.2f, Y: %.2f", state[0], state[1]);
+                RCLCPP_INFO(node_->get_logger(), "  X: %.2f, Y: %.2f, f(x,y): %.2f", state[0], state[1], NavigationUtil::map_lookup(state[0], state[1]));
         }
 
         void run_local() {
@@ -85,10 +85,11 @@ using namespace sbmpo;
             /* LOCAL PLANNER END */
 
             // Print results
-            RCLCPP_INFO(node_->get_logger(), "Local Plan (%.2f ms):", local_run_.time_us() / 1E3);
+            RCLCPP_INFO(node_->get_logger(), "Local Plan (%lu us):", local_run_.time_us());
             RCLCPP_INFO(node_->get_logger(), "Exit code: %d, Buffer size: %d", int(local_run_.exit_code()), int(local_run_.size()));
             for (State state : local_run_.state_path()) 
-                RCLCPP_INFO(node_->get_logger(), "  X: %.2f, Y: %.2f, Q: %.2f, V: %.2f, G: %.2f", state[0], state[1], state[2], state[3], state[4]);
+                RCLCPP_INFO(node_->get_logger(), "  X: %.2f, Y: %.2f, Q: %.2f, V: %.2f, G: %.2f, f(x,y): %.2f", 
+                    state[0], state[1], state[2], state[3], state[4], NavigationUtil::map_lookup(state[0], state[1]));
         }
 
         Parameters global_parameters() {

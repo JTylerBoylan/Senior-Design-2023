@@ -145,6 +145,11 @@ def generate_launch_description():
         executable='rviz2',
         arguments=['-d', rviz_config_path],
         output='screen')
+    
+    goal_point = Node(
+        package='sd504_nav_planner',
+        executable='goal_publisher',
+        output='screen')
 
     return LaunchDescription([
         nvblox_config,
@@ -152,5 +157,6 @@ def generate_launch_description():
         vslam_container,
         nvblox_container,
         base_link_tf_node,
-        rviz
+        rviz,
+        goal_point
     ])

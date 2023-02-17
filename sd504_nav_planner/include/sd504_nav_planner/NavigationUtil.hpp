@@ -1,6 +1,7 @@
 #ifndef SD_NAV_UTIL_HPP
 #define SD_NAV_UTIL_HPP
 
+#include <iostream>
 #include <math.h>
 
 #include "rclcpp/rclcpp.hpp"
@@ -9,10 +10,11 @@
 #include "nvblox_msgs/msg/distance_map_slice.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "geometry_msgs/msg/point_stamped.hpp"
 
 namespace senior_design {
 
-#define INVALID_DISTANCE -1.0f
+#define INVALID_DISTANCE 3.402823466E38f
 
 using namespace sbmpo;
 
@@ -30,7 +32,7 @@ using namespace sbmpo;
         static nav_msgs::msg::Odometry::ConstSharedPtr odometry;
 
         // Goal point msg
-        static geometry_msgs::msg::Point::ConstSharedPtr goal_point;
+        static geometry_msgs::msg::PointStamped::ConstSharedPtr goal_point;
 
         // Map lookup function
         static float map_lookup(const float x, const float y) {
@@ -49,7 +51,7 @@ using namespace sbmpo;
                 return INVALID_DISTANCE;
 
             // Convert to index
-            size_t index = x_index * distance_map_slice->width + y_index;
+            size_t index = y_index * distance_map_slice->width + x_index;
 
             // Grab value from slice
             float distance = distance_map_slice->data[index];
@@ -76,8 +78,8 @@ using namespace sbmpo;
             if (goal_point == nullptr)
                 return State(0);
             return {
-                float(goal_point->x),
-                float(goal_point->y)
+                float(goal_point->point.x),
+                float(goal_point->point.y)
             };
         }
 
@@ -191,7 +193,7 @@ using namespace sbmpo;
 
     nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr NavigationUtil::distance_map_slice = nullptr;
     nav_msgs::msg::Odometry::ConstSharedPtr NavigationUtil::odometry = nullptr;
-    geometry_msgs::msg::Point::ConstSharedPtr NavigationUtil::goal_point = nullptr;
+    geometry_msgs::msg::PointStamped::ConstSharedPtr NavigationUtil::goal_point = nullptr;
 
 }
 

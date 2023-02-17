@@ -35,7 +35,7 @@ class PlannerNode : public rclcpp::Node {
 			);
 
 			// Create goal point subscriber
-			goal_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
+			goal_sub_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
 				"/nav/goal", // Topic
 				10, // Queue size
 				std::bind(&PlannerNode::goal_point_callback, this, std::placeholders::_1) // Callback function
@@ -65,7 +65,7 @@ class PlannerNode : public rclcpp::Node {
 			NavigationUtil::odometry = odom;
 		}
 
-		void goal_point_callback(const geometry_msgs::msg::Point::ConstSharedPtr goal) {
+		void goal_point_callback(const geometry_msgs::msg::PointStamped::ConstSharedPtr goal) {
 			NavigationUtil::goal_point = goal;
 		}
 
@@ -81,7 +81,7 @@ class PlannerNode : public rclcpp::Node {
 		// ROS Subscribers
 		rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 		rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
-		rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr goal_sub_;
+		rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr goal_sub_;
 
 		// ROS Publishers
 		rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;

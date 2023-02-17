@@ -14,6 +14,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nvblox_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sbmpo REQUIRED)
 
@@ -22,8 +23,11 @@ include_directories(include)
 add_executable(planner src/planner_node.cpp)
 ament_target_dependencies(planner rclcpp nvblox_msgs nav_msgs sbmpo)
 
+add_executable(goal_publisher src/goal_publisher_node.cpp)
+ament_target_dependencies(goal_publisher rclcpp geometry_msgs)
+
 install(
-	TARGETS planner
+	TARGETS planner goal_publisher
 	DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
