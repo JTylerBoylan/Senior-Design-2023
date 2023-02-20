@@ -1,8 +1,6 @@
 #include <chrono>
 #include <ctime>
 
-#include "sd504_nav_planner/CarModelLocal.hpp"
-#include "sd504_nav_planner/CarModelGlobal.hpp"
 #include "sd504_nav_planner/NavigationPlanner.hpp"
 
 using namespace std::chrono_literals;

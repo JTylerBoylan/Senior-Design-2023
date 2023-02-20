@@ -2,6 +2,8 @@
 #define SD_NAV_PLANNER_HPP
 
 #include "sd504_nav_planner/NavigationUtil.hpp"
+#include "sd504_nav_planner/CarModelLocal.hpp"
+#include "sd504_nav_planner/CarModelGlobal.hpp"
 
 namespace senior_design {
 
