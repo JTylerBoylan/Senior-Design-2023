@@ -1,0 +1,14 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+# Install Jetson GPIO package
+RUN python3 -m pip install Jetson.GPIO
+
+# Set up user permissions
+RUN groupadd -f -r gpio \
+    && usermod -a -G gpio ${USERNAME}
+
+# Source the ROS dev folder
+# RUN /bin/bash -c "source /workspaces/isaac_ros-dev/install/setup.bash"
+
+# Eventually add auto start ros packages
