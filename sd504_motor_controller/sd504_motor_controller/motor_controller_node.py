@@ -32,10 +32,10 @@ class MotorControllerNode(Node):
         self.get_logger().info('Motor Controller Initialized.')
 
     def steering_callback(self, msg):
-        self.serial_port.write("s" + msg)
+        self.steering_angle = msg;
 
     def drive_callback(self, msg):
-        self.serial_port.write("d" + msg)
+        self.drive_power = msg;
     
         
 def main(args=None):
