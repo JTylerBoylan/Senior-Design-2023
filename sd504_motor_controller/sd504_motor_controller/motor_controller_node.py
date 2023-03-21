@@ -10,7 +10,7 @@ class MotorControllerNode(Node):
         super().__init__('motor_controller_node')
 
         # Set up serial ports
-        self.serial_port = serial.Serial('/dev/ttyUSB0', 9600)
+        self.serial_port = serial.Serial('/dev/ttyACM0', 9600)
 
         # Set up subscribers
         self.steering_sub = self.create_subscription(
@@ -25,6 +25,9 @@ class MotorControllerNode(Node):
             self.drive_callback,
             10
         )
+
+        #test
+        self.serial_port.write(52)
 
         self.get_logger().info('Motor Controller Initialized.')
 
