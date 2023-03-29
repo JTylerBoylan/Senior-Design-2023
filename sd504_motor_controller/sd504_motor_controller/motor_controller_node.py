@@ -1,3 +1,4 @@
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int8
@@ -11,6 +12,10 @@ class MotorControllerNode(Node):
 
         # Set up serial ports
         self.serial_port = serial.Serial('/dev/ttyACM0', 9600)
+
+        # Initialize power
+        self.steering_angle = -1
+        self.drive_power = -1
 
         # Set up subscribers
         self.steering_sub = self.create_subscription(
@@ -28,22 +33,28 @@ class MotorControllerNode(Node):
         
         # Set up communicate loop
         self.comm_frequency = 50 # Hz
-        self.comm_timer = self.create_timer(self.comm_frquency, self.comm_callback)
+        self.comm_timer = self.create_timer(1.0 / self.comm_frequency, self.comm_callback)
 
         self.get_logger().info('Motor Controller Initialized.')
 
     def steering_callback(self, msg):
-        self.steering_angle = msg;
+        self.steering_angle = msg.data
+        self.get_logger().info("Set steering angle to " + str(self.steering_angle))
 
     def drive_callback(self, msg):
-        self.drive_power = msg;
+        self.drive_power = msg.data
+        self.get_logger().info("Set drive power to " + str(self.drive_power))
         
     def comm_callback(self):
+
+        if (self.steering_angle == -1 | self.drive_power == -1):
+            return
+
         # Send motor signals to Teensy
-        self.serial_port.write(str(self.drive_power).encode())
-        self.serial_port.write(str(self.steering_angle).encode())
-        self.serial_port.write(str(0).encode())
-        self.serial_port.write(str(0).encode())
+        self.serial_port.write((str(self.steering_angle) + " ").encode())
+        self.serial_port.write((str(self.drive_power) + "\n").encode())
+
+        self.get_logger().info("Sent values to serial")
         
         # Receive steering encoder value from Teensy
         # data = self.serial_port.readline().decode()
