@@ -5,6 +5,8 @@
 #include "sd504_nav_planner/CarModelLocal.hpp"
 #include "sd504_nav_planner/CarModelGlobal.hpp"
 
+#include "std_msgs/msg/float32.hpp"
+
 namespace senior_design {
 
 using namespace sbmpo;
@@ -124,6 +126,18 @@ using namespace sbmpo;
 
         geometry_msgs::msg::PointStamped local_goal_point() {
             return NavigationUtil::convert_state_to_point(local_goal());
+        }
+
+        std_msgs::msg::Float32 next_drive_acceleration() {
+            std_msgs::msg::Float32 msg;
+            msg.data = local_run_.control_path().size() > 0 ? local_run_.control_path()[0][0]: 0;
+            return msg;
+        }
+
+        std_msgs::msg::Float32 next_turn_angle() {
+            std_msgs::msg::Float32 msg;
+            msg.data = local_run_.control_path().size() > 0 ? local_run_.control_path()[0][1] : 0;
+            return msg;
         }
 
         private:

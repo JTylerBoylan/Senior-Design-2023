@@ -29,7 +29,7 @@ using namespace sbmpo;
         const float INVERSE_WHEEL_BASE_LENGTH = 2.0; // m
 
         // Constraints
-        const float MIN_DISTANCE_TO_OBSTACLES = 0.0f; // m
+        const float MIN_DISTANCE_TO_OBSTACLES = 0.25f; // m
         const float X_MAX = 100; // m
         const float X_MIN = -100; // m
         const float Y_MAX = 100; // m
@@ -71,7 +71,7 @@ using namespace sbmpo;
             for (int i = 0; i < INTEGRATION_SIZE; i++) {
                 state[X] += cosf(state[Q]) * state[V] * time_increment;
                 state[Y] += sinf(state[Q]) * state[V] * time_increment;
-                state[Q] += state[G] * state[V] * time_increment * INVERSE_WHEEL_BASE_LENGTH;
+                state[Q] += tanf(state[G]) * state[V] * time_increment * INVERSE_WHEEL_BASE_LENGTH;
                 state[V] += control[dVdt] * time_increment;
                 state[G] += control[dGdt] * time_increment;
                 if (!is_valid(state))
@@ -118,7 +118,7 @@ using namespace sbmpo;
                     state[V] >= VELOCITY_MIN &&
                     state[G] <= TURN_ANGLE_MAX && 
                     state[G] >= TURN_ANGLE_MIN &&
-                    abs(state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*state[G]) <= TURN_ACCELERATION_MAX &&
+                    std::abs(state[V]*state[V]*INVERSE_WHEEL_BASE_LENGTH*state[G]) <= TURN_ACCELERATION_MAX &&
                     NavigationUtil::map_lookup(state[X], state[Y]) > MIN_DISTANCE_TO_OBSTACLES;
         }
 

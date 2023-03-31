@@ -11,7 +11,7 @@ class GoalPublisher : public rclcpp::Node {
 
             // Set goal point
             goal_.header.frame_id = "map";
-            goal_.point.x = 2.5;
+            goal_.point.x = 50;
             goal_.point.y = 0.0;
             goal_.point.z = 0.0;
 

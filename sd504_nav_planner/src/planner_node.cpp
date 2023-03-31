@@ -45,6 +45,12 @@ class PlannerNode : public rclcpp::Node {
 			// create local goal pub
 			local_goal_pub_ = this->create_publisher<geometry_msgs::msg::PointStamped>("/nav/goal/local", 10);
 
+			// Create local path publisher
+			steer_motor_pub_ = this->create_publisher<std_msgs::msg::Float32>("/motors/steering_angle", 10);
+
+			// Create local path publisher
+			drive_motor_pub_ = this->create_publisher<std_msgs::msg::Float32>("/motors/drive", 10);
+
 			// Start global planner loop
 			timer_global_ = this->create_wall_timer(500ms,
 				std::bind(&PlannerNode::global_planner_callback, this));
@@ -81,6 +87,8 @@ class PlannerNode : public rclcpp::Node {
 			if (planner_->run_local()) {
 				local_path_pub_->publish(planner_->local_path());
 			}
+			steer_motor_pub_->publish(planner_->next_turn_angle());
+			drive_motor_pub_->publish(planner_->next_drive_acceleration());
 		}
 
 		// ROS Subscribers
@@ -92,6 +100,10 @@ class PlannerNode : public rclcpp::Node {
 		rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_path_pub_;
 		rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr local_path_pub_;
 		rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr local_goal_pub_;
+
+		// Controls publisher
+		rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr steer_motor_pub_;
+		rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr drive_motor_pub_;
 
 		// ROS Timers
 		rclcpp::TimerBase::SharedPtr timer_local_, timer_global_;

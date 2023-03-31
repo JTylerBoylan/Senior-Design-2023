@@ -100,7 +100,7 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         arguments=[
-            '0', '0', '0', '0', '0', '0', '1',
+            '1', '0.15', '0', '0.9941', '0', '-0.1089', '0',
             'base_link', 'camera_link']
     )
 
@@ -151,6 +151,18 @@ def generate_launch_description():
         executable='goal_publisher',
         output='screen')
 
+    nav_planner = Node(
+        package='sd504_nav_planner',
+        executable='planner',
+        output='screen'
+    )
+
+    motor_controller = Node(
+        package='sd504_motor_controller',
+        executable='motor_controller_node',
+        output='screen'
+    )
+
     return LaunchDescription([
         nvblox_config,
         realsense_container,
@@ -158,5 +170,7 @@ def generate_launch_description():
         nvblox_container,
         base_link_tf_node,
         rviz,
-        goal_point
+        goal_point,
+        nav_planner,
+        motor_controller
     ])
