@@ -1,7 +1,7 @@
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32
+from std_msgs.msg import Int8
 
 import serial
 
@@ -13,23 +13,19 @@ class MotorControllerNode(Node):
         # Set up serial ports
         self.serial_port = serial.Serial('/dev/ttyACM0', 9600)
 
-        # Constants
-        self.max_acceleration = 2.5
-        self.max_turn_angle = 0.436
-
         # Initialize power
         self.steering_angle = -1
         self.drive_power = -1
 
         # Set up subscribers
         self.steering_sub = self.create_subscription(
-            Float32,
+            Int8,
             '/motors/steering_angle',
             self.steering_callback,
             10
         )
         self.drive_sub = self.create_subscription(
-            Float32,
+            Int8,
             '/motors/drive',
             self.drive_callback,
             10
@@ -42,11 +38,11 @@ class MotorControllerNode(Node):
         self.get_logger().info('Motor Controller Initialized.')
 
     def steering_callback(self, msg):
-        self.steering_angle = int(msg.data / self.max_turn_angle * 127)
+        self.steering_angle = msg.data
         self.get_logger().info("Set steering angle to " + str(self.steering_angle))
 
     def drive_callback(self, msg):
-        self.drive_power = int(msg.data / self.max_acceleration * 127)
+        self.drive_power = msg.data
         self.get_logger().info("Set drive power to " + str(self.drive_power))
         
     def comm_callback(self):

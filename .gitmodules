@@ -1,5 +1,5 @@
 [submodule "sbmpo"]
-	path = SBMPO
-	url = git@github.com:JTylerBoylan/SBMPO.git
-	branch = ros2-sd
+	path = sbmpo
+	url = git@github.com:JTylerBoylan/sbmpo.git
+	branch = ros2
 	update = rebase

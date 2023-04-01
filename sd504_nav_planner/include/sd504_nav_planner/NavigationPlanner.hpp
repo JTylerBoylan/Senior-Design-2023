@@ -1,224 +1,220 @@
-#ifndef SD_NAV_PLANNER_HPP
-#define SD_NAV_PLANNER_HPP
+#ifndef SD504_NAV_PLANNER_HPP_
+#define SD504_NAV_PLANNER_HPP_
 
-#include "sd504_nav_planner/NavigationUtil.hpp"
-#include "sd504_nav_planner/CarModelLocal.hpp"
-#include "sd504_nav_planner/CarModelGlobal.hpp"
+#include <sd504_nav_planner/NavigationUtil.hpp>
+#include <sd504_nav_planner/SD504Model.hpp>
 
-#include "std_msgs/msg/float32.hpp"
+#include <sbmpo_models/Grid2D.hpp>
+#include <sbmpo_models/AckermannSteering.hpp>
 
 namespace senior_design {
 
 using namespace sbmpo;
 
-    // General Parameters
-    const int GLOBAL_DIV_POINT = 4;
+// General Parameters
+const int GLOBAL_DIV_POINT = 10;
+
+class NavigationPlanner {
+
+    public:
+
+    NavigationPlanner(rclcpp::Node * node) {
+
+        node_ = node;
+
+        /*
+            GLOBAL PARAMETERS
+        */
+        global_params_.max_iterations = 25000;
+        global_params_.max_generations = 100;
+        global_params_.sample_time = 1.0;
+        global_params_.grid_resolution = {0.5, 0.5};
+        global_params_.samples = {
+            {1, 0}, {1, 1}, {0, 1}, {-1, 1},
+            {-1, 0}, {-1, -1}, {0, -1}, {1, -1}
+        };
+
+        /*
+            LOCAL PARAMETERS
+        */
+        local_params_.max_iterations = 10000;
+        local_params_.max_generations = 40;
+        local_params_.sample_time = 0.5;
+        local_params_.grid_resolution = {0.04, 0.04, 0.015, 0.3, 0.12};
+        local_params_.samples = {
+            {2.5, 0.523}, {2.5, 0}, {2.5, -0.523},
+            {0, 0.523}, {0, 0}, {0, -0.523},
+            {-1.25, 0.523}, {-1.25, 0}, {-1.25, -0.523}
+        };
+
+        global_params_.start_state = State(0);
+        global_params_.goal_state = State(0);
+        local_params_.start_state = State(0);
+        local_params_.goal_state = State(0);
+
+    }
+
+    ~NavigationPlanner() {
+        delete node_;
+    }
+
+    // Run planner
+    int plan() {
+
+        // Check if ready to run
+        if (global_params_.goal_state == State(0)) {
+            return 0;
+        }
+
+        // Run global sbmpo
+        global_sbmpo_ = SBMPO(global_model_, global_params_);
+        global_sbmpo_.run();
+        this->print_global_run(global_sbmpo_);
+
+        // Check valid global path
+        if (global_sbmpo_.exit_code() != 0) {
+            return 0;
+        }
+
+        // Update local goal
+        State local_goal = global_sbmpo_.state_path().size() <= GLOBAL_DIV_POINT ?
+                        global_sbmpo_.state_path().back() :
+                        global_sbmpo_.state_path()[GLOBAL_DIV_POINT];
+        local_params_.goal_state = {local_goal[0], local_goal[1], 0, 0, 0};
+
+        // Run local sbmpo
+        local_sbmpo_ = SBMPO(local_model_, local_params_);
+        local_sbmpo_.run();
+        this->print_local_run(local_sbmpo);
+
+        // Check valid local path
+        if (local_sbmpo_.exit_code() != 0) {
+            return 1;
+        }
+
+        return 2;
+    }
+
+    void update_state(const nav_msgs::msg::Odometry::ConstSharedPtr odom) {
+        global_params_.start_state = {
+                float(odometry->pose.pose.position.x),
+                float(odometry->pose.pose.position.y)
+            };
+        local_params_.start_state = {
+                float(odometry->pose.pose.position.x),
+                float(odometry->pose.pose.position.y),
+                NavigationUtil::quaternion_to_pitch(odometry->pose.pose.orientation),
+                float(odometry->twist.twist.linear.x),
+                0.0f
+                // NavigationUtil::rotation_to_ackermann(odometry->twist.twist.angular.z, odometry->twist.twist.linear.x, WHEEL_BASE_LENGTH)
+            };
+    }
+
+    void update_goal(const geometry_msgs::msg::PointStamped::ConstSharedPtr goal) {
+        global_params_.goal_state = {
+                float(goal_point->point.x),
+                float(goal_point->point.y)
+            };
+    }
+
+    void update_map(const nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr slice) {
+        global_model_.set_map(slice);
+        local_model_.set_map(slice);
+    }
+
+    nav_msgs::msg::Path global_path() {
+        return NavigationUtil::convert_XYQVG_path_to_path(NavigationUtil::XY_path_to_XYQVG_path(global_sbmpo_.state_path(), global_sbmpo_.control_path()));
+    }
+
+    nav_msgs::msg::Path local_path() {
+        return NavigationUtil::convert_XYQVG_path_to_path(local_sbmpo_.state_path());
+    }
+
+    geometry_msgs::msg::PointStamped local_goal_point() {
+        return NavigationUtil::convert_state_to_point(local_goal());
+    }
+
+    std_msgs::msg::Int8 next_drive_acceleration() {
+        std_msgs::msg::Int8 msg;
+        const float drive_acc = local_sbmpo_.control_path().size() > 0 ? local_sbmpo_.control_path()[0][0] : 0;
+        msg.data = int((127.0f/3.75f)*(drive_acc + 1.25f));
+        return msg;
+    }
+
+    std_msgs::msg::Int8 next_turn_angle() {
+        std_msgs::msg::Int8 msg;
+        const float turn_angle = local_sbmpo_.control_path().size() > 0 ? local_sbmpo_.control_path()[0][1] : 0;
+        msg.data = int((127.0f/0.523f)*turn_angle);
+        return msg;
+    }
+
+    private:
+
+    // Node
+    rclcpp::Node * node_;
+
+    // Models
+    SD504Model<sbmpo_models::Grid2DModel> global_model_;
+    SD504Model<sbmpo_models::AckermannSteeringModel> local_model_;
+
+    // Params
+    SBMPOParameters global_params_;
+    SBMPOParameters local_params_;
+
+    // SBMPO
+    SBMPO global_sbmpo_;
+    SBMPO local_sbmpo_;
+
+    /*
+        PRINTING FUNCTIONS
+    */
+
+    void print_global_run(SBMPO &run) {
+        RCLCPP_INFO(node_->get_logger(), "----- GLOBAL RUN -----");
+        RCLCPP_INFO(node_->get_logger(), "-- Parameters --");
+        this->print_parameters(global_parameters());
+        RCLCPP_INFO(node_->get_logger(), "-- Results --");
+        this->print_results(run);
+        RCLCPP_INFO(node_->get_logger(), "----- ----- -----\n");
+    }
+
+    void print_local_run(SBMPO &run) {
+        RCLCPP_INFO(node_->get_logger(), "----- LOCAL RUN -----");
+        RCLCPP_INFO(node_->get_logger(), "-- Parameters --");
+        this->print_parameters(local_parameters());
+        RCLCPP_INFO(node_->get_logger(), "-- Results --");
+        this->print_results(run);
+        RCLCPP_INFO(node_->get_logger(), "----- ----- -----\n");
+    }
     
-    // Global Parameters
-    const int GLOBAL_MAX_ITERATIONS = 1E4;
-    const int GLOBAL_MAX_GENERATIONS = 1E3;
-    const float GLOBAL_SAMPLE_TIME = 1.0f;
-    const float GLOBAL_GRID_RESOLUTION = 0.25f;
-    const std::vector<State> GLOBAL_SAMPLES = {
-        {1,0}, {1,1}, {0,1}, {-1,1},
-        {-1,0}, {-1,-1}, {0,-1}, {1,-1}
-    };
+    void print_parameters(const SBMPOParameters &params) {
+        RCLCPP_INFO(node_->get_logger(), " Max Iterations: %d", params.max_iterations);
+        RCLCPP_INFO(node_->get_logger(), " Max Generations: %d", params.max_generations);
+        RCLCPP_INFO(node_->get_logger(), " Sample Time: %.2f", params.sample_time);
+        RCLCPP_INFO(node_->get_logger(), " Number of States: %lu", params.grid_resolution.size());
+        RCLCPP_INFO(node_->get_logger(), " Number of Controls: %lu", params.samples.empty() ? 0 : params.samples[0].size());
+        RCLCPP_INFO(node_->get_logger(), " Number of Samples: %lu", params.samples.size());
+    }
 
-    // Local Parameters
-    const int LOCAL_MAX_ITERATIONS = 5E3;
-    const int LOCAL_MAX_GENERATIONS = 50;
-    const float LOCAL_SAMPLE_TIME = 0.5f;
-    const float LOCAL_GRID_RESOLUTION_XY = 0.25f;
-    const float LOCAL_GRID_RESOLUTION_Q = 0.08727f;
-    const float LOCAL_GRID_RESOLUTION_V = 0.50f;
-    const float LOCAL_GRID_RESOLUTION_G = 0.13090f;
-    const std::vector<State> LOCAL_SAMPLES = {
-        {2.45, 0.436}, {2.45, 0.218}, {2.45, 0}, {2.45, -0.218}, {2.45, -0.436},
-        {1.23, 0.436}, {1.23, 0.218}, {1.23, 0}, {1.23, -0.218}, {1.23, -0.436},
-        {0, 0.436}, {0, 0.218}, {0, 0}, {0, -0.218}, {0, -0.436},
-        {-1.23, 0.436}, {-1.23, 0.218}, {-1.23, 0}, {-1.23, -0.218}, {-1.23, -0.436}
-    };
-
-
-    class NavigationPlanner {
-
-        public:
-
-        NavigationPlanner(rclcpp::Node * node) {
-            node_ = node;
+    void print_results(SBMPO &run) {
+        RCLCPP_INFO(node_->get_logger(), " Exit code: %d", run.exit_code());
+        RCLCPP_INFO(node_->get_logger(), " Time (us): %lu", run.time_us());
+        RCLCPP_INFO(node_->get_logger(), " Buffer Size: %lu", run.size());
+        RCLCPP_INFO(node_->get_logger(), " Path Size: %lu", run.state_path().size());
+        RCLCPP_INFO(node_->get_logger(), " - Path -");
+        for (int p = 0; p < run.state_path().size(); p++) {
+            const State state = run.state_path()[p];
+            const Control control = p == run.state_path().size() ? {} : run.control_path()[p];
+            std::string state_str, control_str;
+            for (size_t s = 0; s < state.size(); s++)
+                state_str += std::to_string(state[s]) + " ";
+            for (size_t c = 0; c < control.size(); c++)
+                control_str += std::to_string(control[c]) + " ";
+            RCLCPP_INFO(node_->get_logger(), " (%d) [ %s] [ %s]", p++, state_str.c_str(), control_str.c_str());
         }
+    }
 
-        ~NavigationPlanner() {
-            delete node_;
-        }
-
-        bool run_global() {
-
-            // Check if ready to run
-            if (!is_global_ready())
-                return false;
-
-            // Create global model
-            CarModelGlobal global_model(NavigationUtil::current_XY(), NavigationUtil::goal_XY());
-
-            /* GLOBAL PLANNER RUN */
-            global_run_ = SBMPO::run(global_model, global_parameters());
-            /* GLOBAL PLANNER END */
-
-            // Print results
-            this->print_global_run(global_run_);
-
-            return true;
-        }
-
-        bool run_local() {
-
-            // Check if ready to run
-            if (!is_local_ready())
-                return false;
-
-            // Create local model
-            CarModelLocal local_model(NavigationUtil::current_XYQVG(), this->local_goal());
-
-            /* LOCAL PLANNER RUN */
-            local_run_ = SBMPO::run(local_model, local_parameters());
-            /* LOCAL PLANNER END */
-
-            // Print results
-            this->print_local_run(local_run_);
-
-            return true;
-        }
-
-        Parameters global_parameters() {
-            Parameters params;
-            params.max_iterations = GLOBAL_MAX_ITERATIONS;
-            params.max_generations = GLOBAL_MAX_GENERATIONS;
-            params.sample_time = GLOBAL_SAMPLE_TIME;
-            params.grid_states = {true, true};
-            params.grid_resolution = {GLOBAL_GRID_RESOLUTION, GLOBAL_GRID_RESOLUTION};
-            params.samples = GLOBAL_SAMPLES;
-            return params;
-        }
-
-        Parameters local_parameters() {
-            Parameters params;
-            params.max_iterations = LOCAL_MAX_ITERATIONS;
-            params.max_generations = LOCAL_MAX_GENERATIONS;
-            params.sample_time = LOCAL_SAMPLE_TIME;
-            params.grid_states = {true, true, true, true, true};
-            params.grid_resolution = {LOCAL_GRID_RESOLUTION_XY,
-                                        LOCAL_GRID_RESOLUTION_XY,
-                                        LOCAL_GRID_RESOLUTION_Q,
-                                        LOCAL_GRID_RESOLUTION_V,
-                                        LOCAL_GRID_RESOLUTION_G};
-            params.samples = LOCAL_SAMPLES;
-            return params;
-        }
-
-        nav_msgs::msg::Path global_path() {
-            return NavigationUtil::convert_XYQVG_path_to_path(NavigationUtil::XY_path_to_XYQVG_path(global_run_.state_path(), global_run_.control_path()));
-        }
-
-        nav_msgs::msg::Path local_path() {
-            return NavigationUtil::convert_XYQVG_path_to_path(local_run_.state_path());
-        }
-
-        geometry_msgs::msg::PointStamped local_goal_point() {
-            return NavigationUtil::convert_state_to_point(local_goal());
-        }
-
-        std_msgs::msg::Float32 next_drive_acceleration() {
-            std_msgs::msg::Float32 msg;
-            msg.data = local_run_.control_path().size() > 0 ? local_run_.control_path()[0][0]: 0;
-            return msg;
-        }
-
-        std_msgs::msg::Float32 next_turn_angle() {
-            std_msgs::msg::Float32 msg;
-            msg.data = local_run_.control_path().size() > 0 ? local_run_.control_path()[0][1] : 0;
-            return msg;
-        }
-
-        private:
-
-        // Node
-        rclcpp::Node * node_;
-
-        // SBMPO Runs
-        SBMPORun global_run_;
-        SBMPORun local_run_;
-
-        bool is_global_ready() {
-            return NavigationUtil::distance_map_slice != nullptr
-                && NavigationUtil::odometry != nullptr
-                && NavigationUtil::goal_point != nullptr;
-        }
-
-        bool is_local_ready() {
-            return !global_run_.state_path().empty();
-        }
-
-        State local_goal() {
-            std::vector<State> xyqvg_path = NavigationUtil::XY_path_to_XYQVG_path(global_run_.state_path(), global_run_.control_path());
-            int div_idx = xyqvg_path.size() <= GLOBAL_DIV_POINT ? xyqvg_path.size() - 1 : GLOBAL_DIV_POINT;
-            return xyqvg_path[div_idx];
-        }
-
-        void print_global_run(SBMPORun &run) {
-            RCLCPP_INFO(node_->get_logger(), "----- GLOBAL RUN -----");
-
-            // Print parameters
-            RCLCPP_INFO(node_->get_logger(), "-- Parameters --");
-            this->print_parameters(global_parameters());
-            
-            // Print results
-            RCLCPP_INFO(node_->get_logger(), "-- Results --");
-            this->print_results(run);
-
-            RCLCPP_INFO(node_->get_logger(), "----- ----- -----\n");
-        }
-
-        void print_local_run(SBMPORun &run) {
-            RCLCPP_INFO(node_->get_logger(), "----- LOCAL RUN -----");
-
-            // Print parameters
-            RCLCPP_INFO(node_->get_logger(), "-- Parameters --");
-            this->print_parameters(local_parameters());
-            
-            // Print results
-            RCLCPP_INFO(node_->get_logger(), "-- Results --");
-            this->print_results(run);
-
-            RCLCPP_INFO(node_->get_logger(), "----- ----- -----\n");
-        }
-        
-        void print_parameters(const Parameters &params) {
-            RCLCPP_INFO(node_->get_logger(), " Max Iterations: %d", params.max_iterations);
-            RCLCPP_INFO(node_->get_logger(), " Max Generations: %d", params.max_generations);
-            RCLCPP_INFO(node_->get_logger(), " Sample Time: %.2f", params.sample_time);
-            RCLCPP_INFO(node_->get_logger(), " Number of States: %lu", params.grid_resolution.size());
-            RCLCPP_INFO(node_->get_logger(), " Number of Controls: %lu", params.samples.empty() ? 0 : params.samples[0].size());
-            RCLCPP_INFO(node_->get_logger(), " Number of Samples: %lu", params.samples.size());
-        }
-
-        void print_results(SBMPORun &run) {
-            RCLCPP_INFO(node_->get_logger(), " Exit code: %d", run.exit_code());
-            RCLCPP_INFO(node_->get_logger(), " Time (us): %lu", run.time_us());
-            RCLCPP_INFO(node_->get_logger(), " Buffer Size: %lu", run.size());
-            RCLCPP_INFO(node_->get_logger(), " Path Size: %lu", run.state_path().size());
-            RCLCPP_INFO(node_->get_logger(), " - Path -");
-            int p = 1;
-            for (State state : run.state_path()) {
-                float dist_xy = NavigationUtil::map_lookup(state[0], state[1]);
-                std::string coord = std::to_string(state[0]);
-                for (size_t s = 1; s < state.size(); s++)
-                    coord += ", " + std::to_string(state[s]);
-                RCLCPP_INFO(node_->get_logger(), " (%d) (%s) - f(x,y)= %.2f", p++, coord.c_str(), dist_xy == INVALID_DISTANCE ? -1.0 : dist_xy);
-            }
-        }
-
-    };
+};
 
 }
 
