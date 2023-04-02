@@ -95,8 +95,8 @@ class PlannerNode : public rclcpp::Node {
 	rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr local_goal_pub_;
 
 	// Controls publisher
-	rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr steer_motor_pub_;
-	rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr drive_motor_pub_;
+	rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr steer_motor_pub_;
+	rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr drive_motor_pub_;
 
 	// ROS Timers
 	rclcpp::TimerBase::SharedPtr planner_timer_;

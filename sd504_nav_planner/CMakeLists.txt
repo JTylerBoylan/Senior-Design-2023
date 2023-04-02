@@ -17,11 +17,12 @@ find_package(nvblox_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sbmpo REQUIRED)
+find_package(sbmpo_models REQUIRED)
 
 include_directories(include)
 
 add_executable(planner src/planner_node.cpp)
-ament_target_dependencies(planner rclcpp nvblox_msgs nav_msgs sbmpo)
+ament_target_dependencies(planner rclcpp nvblox_msgs nav_msgs sbmpo sbmpo_models)
 
 add_executable(goal_publisher src/goal_publisher_node.cpp)
 ament_target_dependencies(goal_publisher rclcpp geometry_msgs)
