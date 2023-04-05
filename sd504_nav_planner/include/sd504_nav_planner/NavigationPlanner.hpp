@@ -52,6 +52,8 @@ class NavigationPlanner {
         local_params_.start_state = State(0);
         local_params_.goal_state = State(0);
 
+        local_model_.set_goal_threshold(0.25f);
+
     }
 
     ~NavigationPlanner() {
@@ -62,9 +64,12 @@ class NavigationPlanner {
     int plan() {
 
         // Check if ready to run
-        if (global_params_.goal_state == State(0)) {
+        if (global_params_.start_state == State(0) || 
+            global_params_.goal_state == State(0)) {
             return 0;
         }
+
+        RCLCPP_INFO(node_->get_logger(), "Running global planner...");
 
         // Run global sbmpo
         global_sbmpo_ = std::make_shared<SBMPO>(global_model_, global_params_);
@@ -81,6 +86,8 @@ class NavigationPlanner {
                         global_sbmpo_->state_path().back() :
                         global_sbmpo_->state_path()[GLOBAL_DIV_POINT];
         local_params_.goal_state = {local_goal[0], local_goal[1], 0, 0, 0};
+
+        RCLCPP_INFO(node_->get_logger(), "Running local planner...");
 
         // Run local sbmpo
         local_sbmpo_ = std::make_shared<SBMPO>(local_model_, local_params_);
@@ -204,13 +211,13 @@ class NavigationPlanner {
         RCLCPP_INFO(node_->get_logger(), " - Path -");
         for (size_t p = 0; p < run.state_path().size(); p++) {
             const State state = run.state_path()[p];
-            const Control control = p == run.state_path().size() ? Control(0) : run.control_path()[p];
+            const Control control = p == run.control_path().size() ? Control(0) : run.control_path()[p];
             std::string state_str, control_str;
             for (size_t s = 0; s < state.size(); s++)
                 state_str += std::to_string(state[s]) + " ";
             for (size_t c = 0; c < control.size(); c++)
                 control_str += std::to_string(control[c]) + " ";
-            RCLCPP_INFO(node_->get_logger(), " (%lu) [ %s] [ %s]", p++, state_str.c_str(), control_str.c_str());
+            RCLCPP_INFO(node_->get_logger(), " (%lu) [ %s] [ %s]", p+1, state_str.c_str(), control_str.c_str());
         }
     }
 
