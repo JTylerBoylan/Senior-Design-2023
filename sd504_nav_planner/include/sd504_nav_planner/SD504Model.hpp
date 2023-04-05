@@ -56,7 +56,7 @@ static_assert(std::is_base_of<sbmpo::Model, ModelType>::value, "ModelType must d
 
     /// @brief Change the distance map slice
     /// @param map_slice Const shared pointer to map slice message
-    void set_map_bounds(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice) {
+    void set_map(nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr map_slice) {
         distance_map_slice_ = map_slice;
     }
 
@@ -68,7 +68,7 @@ static_assert(std::is_base_of<sbmpo::Model, ModelType>::value, "ModelType must d
     nvblox_msgs::msg::DistanceMapSlice::ConstSharedPtr distance_map_slice_;
 
     // Map lookup function
-    static float map_lookup_(const float x, const float y) {
+    float map_lookup_(const float x, const float y) {
 
         // See if slice exists
         if (distance_map_slice_ == nullptr)
