@@ -63,8 +63,10 @@ def generate_launch_description():
         package='isaac_ros_visual_slam',
         plugin='isaac_ros::visual_slam::VisualSlamNode',
         parameters=[{
+                    'enable_imu': True,
+                    'input_imu_frame': 'camera_link',
                     'enable_rectified_pose': True,
-                    'denoise_input_images': False,
+                    'denoise_input_images': True,
                     'rectified_images': True,
                     'enable_debug_mode': False,
                     'debug_dump_path': '/tmp/vslam',
@@ -82,7 +84,8 @@ def generate_launch_description():
         remappings=[('stereo_camera/left/image', '/camera/realsense_splitter_node/output/infra_1'),
                     ('stereo_camera/left/camera_info', '/camera/infra1/camera_info'),
                     ('stereo_camera/right/image', '/camera/realsense_splitter_node/output/infra_2'),
-                    ('stereo_camera/right/camera_info', '/camera/infra2/camera_info')]
+                    ('stereo_camera/right/camera_info', '/camera/infra2/camera_info'),
+                    ('visual_slam/imu', '/camera/imu')]
     )
 
     vslam_container = ComposableNodeContainer(
@@ -100,7 +103,7 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         arguments=[
-            '1', '0.15', '0', '0.9941', '0', '-0.1089', '0',
+            '1', '0', '0.05', '1', '0', '0', '1',
             'base_link', 'camera_link']
     )
 

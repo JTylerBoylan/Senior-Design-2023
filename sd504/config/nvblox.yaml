@@ -6,7 +6,7 @@ nvblox_node:
     voxel_size: 0.05
     slice_height: 0.1
     min_height: -0.1
-    max_height: 0.2
+    max_height: 0.4
     esdf: true
     esdf_2d: true
     mesh: true

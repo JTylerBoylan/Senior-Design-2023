@@ -87,31 +87,39 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: true
+        All Enabled: false
         base_link:
           Value: true
+        camera_accel_frame:
+          Value: false
+        camera_accel_optical_frame:
+          Value: false
         camera_aligned_depth_to_infra1_frame:
-          Value: true
+          Value: false
         camera_color_frame:
-          Value: true
+          Value: false
         camera_color_optical_frame:
-          Value: true
+          Value: false
         camera_depth_frame:
-          Value: true
+          Value: false
         camera_depth_optical_frame:
-          Value: true
+          Value: false
+        camera_gyro_frame:
+          Value: false
+        camera_gyro_optical_frame:
+          Value: false
         camera_infra1_frame:
-          Value: true
+          Value: false
         camera_infra1_optical_frame:
-          Value: true
+          Value: false
         camera_infra2_frame:
-          Value: true
+          Value: false
         camera_infra2_optical_frame:
-          Value: true
+          Value: false
         camera_link:
           Value: true
         map:
-          Value: true
+          Value: false
         odom:
           Value: true
       Marker Scale: 1
@@ -124,6 +132,9 @@ Visualization Manager:
           odom:
             base_link:
               camera_link:
+                camera_accel_frame:
+                  camera_accel_optical_frame:
+                    {}
                 camera_aligned_depth_to_infra1_frame:
                   camera_infra1_optical_frame:
                     {}
@@ -132,6 +143,9 @@ Visualization Manager:
                     {}
                 camera_depth_frame:
                   camera_depth_optical_frame:
+                    {}
+                camera_gyro_frame:
+                  camera_gyro_optical_frame:
                     {}
                 camera_infra1_frame:
                   {}
@@ -383,10 +397,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6753966212272644
+      Pitch: -0.11460323631763458
       Target Frame: base_link
       Value: ThirdPersonFollower (rviz_default_plugins)
-      Yaw: 3.1022353172302246
+      Yaw: 2.7322301864624023
     Saved: ~
 Window Geometry:
   Displays:
