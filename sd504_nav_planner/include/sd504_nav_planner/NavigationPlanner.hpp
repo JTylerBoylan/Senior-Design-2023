@@ -12,7 +12,7 @@ namespace senior_design {
 using namespace sbmpo;
 
 // General Parameters
-const int GLOBAL_DIV_POINT = 10;
+const int GLOBAL_DIV_POINT = 6;
 
 class NavigationPlanner {
 
@@ -27,8 +27,8 @@ class NavigationPlanner {
         */
         global_params_.max_iterations = 25000;
         global_params_.max_generations = 100;
-        global_params_.sample_time = 1.0;
-        global_params_.grid_resolution = {0.5, 0.5};
+        global_params_.sample_time = 0.25;
+        global_params_.grid_resolution = {0.20, 0.20};
         global_params_.samples = {
             {1, 0}, {1, 1}, {0, 1}, {-1, 1},
             {-1, 0}, {-1, -1}, {0, -1}, {1, -1}
@@ -52,7 +52,7 @@ class NavigationPlanner {
         local_params_.start_state = State(0);
         local_params_.goal_state = State(0);
 
-        local_model_.set_goal_threshold(0.25f);
+        local_model_.set_goal_threshold(0.15f);
 
     }
 
@@ -144,14 +144,14 @@ class NavigationPlanner {
     std_msgs::msg::Int8 next_drive_acceleration() {
         std_msgs::msg::Int8 msg;
         const float drive_acc = local_sbmpo_->control_path().size() > 0 ? local_sbmpo_->control_path()[0][0] : 0;
-        msg.data = int((127.0f/3.75f)*(drive_acc + 1.25f));
+        msg.data = int((127.0f/2.5f)*drive_acc);
         return msg;
     }
 
     std_msgs::msg::Int8 next_turn_angle() {
         std_msgs::msg::Int8 msg;
-        const float turn_angle = local_sbmpo_->control_path().size() > 0 ? local_sbmpo_->control_path()[0][1] : 0;
-        msg.data = int((127.0f/0.523f)*turn_angle);
+        const float turn_angle = local_sbmpo_->state_path().size() > 0 ? local_sbmpo_->state_path()[1][4] : 0;
+        msg.data = int((127.0f/0.8f)*turn_angle);
         return msg;
     }
 

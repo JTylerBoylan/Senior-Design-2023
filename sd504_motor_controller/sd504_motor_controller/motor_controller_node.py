@@ -64,6 +64,7 @@ class MotorControllerNode(Node):
         
     def __del__(self):
         # close serial port when node is destroyed
+        self.serial_port.write(("0 0\n").encode())
         self.serial_port.close()
         
 def main(args=None):
