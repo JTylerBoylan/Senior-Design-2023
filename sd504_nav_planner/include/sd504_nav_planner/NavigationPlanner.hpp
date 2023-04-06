@@ -42,7 +42,7 @@ class NavigationPlanner {
         local_params_.sample_time = 0.5;
         local_params_.grid_resolution = {0.04, 0.04, 0.015, 0.3, 0.12};
         local_params_.samples = {
-            {2.5, 0.523}, {2.5, 0}, {2.5, -0.523},
+            {2.5, 0.523}, {2.5, 0.212},  {2.5, 0}, {2.5, -0.212}, {2.5, -0.523},
             {0, 0.523}, {0, 0}, {0, -0.523},
             {-1.25, 0.523}, {-1.25, 0}, {-1.25, -0.523}
         };
@@ -144,7 +144,7 @@ class NavigationPlanner {
     std_msgs::msg::Int8 next_drive_acceleration() {
         std_msgs::msg::Int8 msg;
         const float drive_acc = local_sbmpo_->control_path().size() > 0 ? local_sbmpo_->control_path()[0][0] : 0;
-        msg.data = int((127.0f/2.5f)*drive_acc);
+        msg.data = int((127.0f/6.0f)*drive_acc);
         return msg;
     }
 
