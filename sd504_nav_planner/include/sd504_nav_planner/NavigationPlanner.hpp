@@ -12,7 +12,7 @@ namespace senior_design {
 using namespace sbmpo;
 
 // General Parameters
-const int GLOBAL_DIV_POINT = 6;
+const int GLOBAL_DIV_POINT = 12;
 
 class NavigationPlanner {
 
@@ -37,12 +37,12 @@ class NavigationPlanner {
         /*
             LOCAL PARAMETERS
         */
-        local_params_.max_iterations = 10000;
+        local_params_.max_iterations = 3000;
         local_params_.max_generations = 40;
         local_params_.sample_time = 0.5;
         local_params_.grid_resolution = {0.04, 0.04, 0.015, 0.3, 0.12};
         local_params_.samples = {
-            {2.5, 0.523}, {2.5, 0.212},  {2.5, 0}, {2.5, -0.212}, {2.5, -0.523},
+            {2.5, 0.523}, {2.5, 0}, {2.5, -0.523},
             {0, 0.523}, {0, 0}, {0, -0.523},
             {-1.25, 0.523}, {-1.25, 0}, {-1.25, -0.523}
         };
@@ -150,8 +150,8 @@ class NavigationPlanner {
 
     std_msgs::msg::Int8 next_turn_angle() {
         std_msgs::msg::Int8 msg;
-        const float turn_angle = local_sbmpo_->state_path().size() > 0 ? local_sbmpo_->state_path()[1][4] : 0;
-        msg.data = int((127.0f/0.8f)*turn_angle);
+        const float turn_angle = local_sbmpo_->control_path().size() > 0 ? local_sbmpo_->control_path()[0][1] : 0;
+        msg.data = int(-(127.0f/0.6f)*turn_angle);
         return msg;
     }
 

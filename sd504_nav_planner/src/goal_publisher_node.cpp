@@ -12,7 +12,7 @@ class GoalPublisher : public rclcpp::Node {
             // Set goal point
             goal_.header.frame_id = "map";
             goal_.point.x = 10;
-            goal_.point.y = -1.0;
+            goal_.point.y = 0.0;
             goal_.point.z = 0.0;
 
 			// Create path publisher

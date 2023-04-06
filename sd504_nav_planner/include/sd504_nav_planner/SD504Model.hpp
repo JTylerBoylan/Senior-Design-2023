@@ -17,7 +17,7 @@ static_assert(std::is_base_of<sbmpo::Model, ModelType>::value, "ModelType must d
     public:
 
     SD504Model() {
-        body_radius_ = 0.3f;
+        body_radius_ = 0.35f;
         map_bounds_ = {-100.0f, -100.0f, 100.0f, 100.0f};
     }
 

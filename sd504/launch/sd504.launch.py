@@ -103,7 +103,7 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         arguments=[
-            '1', '0', '0.05', '1', '0', '0', '1',
+            '1', '0', '0.15', '0', '0.1088669', '0', '0.9940563',
             'base_link', 'camera_link']
     )
 
