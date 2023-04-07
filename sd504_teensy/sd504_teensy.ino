@@ -14,7 +14,7 @@
 #define CALIBRATE_SPEED_RATIO 0.5f
 #define CALIBRATE_DELAY 150
 #define ENCODER_MARGIN 50
-#define DELTA_RANGE 1000
+#define DELTA_RANGE 1500
 
 // pin definitions
 #define INT1 6 // Y -> Y
@@ -89,7 +89,7 @@ void read_commands() {
 }
 
 void set_drive_speed(const int duty) {
-  const int serial_duty = map(duty, DUTY_MIN, DUTY_MAX, SERIAL_MIN, SERIAL_MAX);
+  const int serial_duty = map(duty, DUTY_MIN, DUTY_MAX, SERIAL_MAX, SERIAL_MIN);
   Serial1.write(127 + serial_duty);
 }
 
@@ -107,7 +107,7 @@ void run_drive() {
 }
 
 bool steer_to_position(int duty_pos) {
-  const int des_pos = map(duty_pos, DUTY_MIN, DUTY_MAX, min_encoder_val, max_encoder_val);
+  const int des_pos = map(duty_pos, DUTY_MAX, DUTY_MIN, min_encoder_val, max_encoder_val);
   const int delta = des_pos - encoder_val;
   const int duty = delta_to_duty(delta);
   if (abs(delta) > ENCODER_MARGIN) {
