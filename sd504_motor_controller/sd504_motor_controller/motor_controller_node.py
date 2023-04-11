@@ -30,9 +30,16 @@ class MotorControllerNode(Node):
             self.drive_callback,
             10
         )
+
+        # Set up publishers
+        self.encoder_pub = self.create_publisher(
+            Int8,
+            '/motors/encoder',
+            10
+        )
         
         # Set up communicate loop
-        self.comm_frequency = 1 # Hz
+        self.comm_frequency = 10 # Hz
         self.comm_timer = self.create_timer(1.0 / self.comm_frequency, self.comm_callback)
 
         self.get_logger().info('Motor Controller Initialized.')
@@ -47,7 +54,7 @@ class MotorControllerNode(Node):
         
     def comm_callback(self):
 
-        if (self.steering_angle == -1 | self.drive_power == -1):
+        if (self.steering_angle == -1 or self.drive_power == -1):
             return
 
         ser_out = str(self.steering_angle) + " " + str(self.drive_power)
@@ -55,12 +62,16 @@ class MotorControllerNode(Node):
         # Send motor signals to Teensy
         self.serial_port.write((ser_out + "\n").encode())
 
-        self.get_logger().info("Sent [" + ser_out + "] to serial")
+        # self.get_logger().info("Sent [" + ser_out + "] to serial")
         
         # Receive steering encoder value from Teensy
-        # data = self.serial_port.readline().decode()
+        msg = Int8()
+        msg.data = int(self.serial_port.readline().decode())
+
         # publish data to /motors/encoder
-        # self.get_logger().info('Published %d to /motors/encoder', data)
+        self.encoder_pub.publish(msg)
+
+        self.get_logger().info('Published ' + str(msg.data) + ' to /motors/encoder')
         
     def __del__(self):
         # close serial port when node is destroyed

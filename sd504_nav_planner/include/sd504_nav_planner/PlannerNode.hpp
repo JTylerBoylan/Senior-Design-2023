@@ -35,6 +35,11 @@ class PlannerNode : public rclcpp::Node {
 			10,
 			std::bind(&NavigationPlanner::update_goal, planner_, std::placeholders::_1)
 		);
+		encoder_sub_ = this->create_subscription<std_msgs::msg::Int8>(
+			"/motors/encoder",
+			10,
+			std::bind(&NavigationPlanner::update_steering_angle, planner_, std::placeholders::_1)
+		);
 
 		// Publishers
 		global_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("/nav/path/global", 10);
@@ -45,7 +50,7 @@ class PlannerNode : public rclcpp::Node {
 		drive_motor_pub_ = this->create_publisher<std_msgs::msg::Int8>("/motors/drive", 10);
 
 		// Plan Timer
-		planner_timer_ = this->create_wall_timer(250ms,
+		planner_timer_ = this->create_wall_timer(150ms,
 			std::bind(&PlannerNode::planner_callback, this));
 
 		RCLCPP_INFO(this->get_logger(), "Planner node initialized.");
@@ -88,6 +93,7 @@ class PlannerNode : public rclcpp::Node {
 	rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 	rclcpp::Subscription<nvblox_msgs::msg::DistanceMapSlice>::SharedPtr slice_sub_;
 	rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr goal_sub_;
+	rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr encoder_sub_;
 
 	// ROS Publishers
 	rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_path_pub_;
