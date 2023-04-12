@@ -57,3 +57,4 @@ Then, to restart, just run `ros2 launch sd504 sd504.launch.py` again.
 ### Debugging and Additional Info
 - If the camera or Teensy is not connecting, make sure the cables are plugged in correctly. You might want to try wiggling them around a little bit.
 - If you make changes to the source code in any packages, you'll have to recompile the code by running `colcon build --packages-select sd504_nav_planner sd504_motor_controller --cmake-args -DCMAKE_BUILD_TYPE=Release`
+- If the drive motors are stuck in reverse even after the nodes are closed, re-run the nodes, let them send a few motor commands, and then close them again. This should fix that issue.
