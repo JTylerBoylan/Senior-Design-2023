@@ -32,9 +32,9 @@ This will run a the RealSense application. You should see 'RealSense device foun
 
 To see if the Teensy is connected properly, run the following command:
 ```
-ls /dev
+ls /dev | grep tty
 ```
-This will show you all the devices connected to the Jetson that are ported into the ROS2 container. Specifically, look for `ttyAMC0` which is the name for the Teensy device. 
+This will show you the `tty` devices connected to the Jetson that are ported into the ROS2 container. Specifically, look for `ttyAMC0` which is the name for the Teensy device. 
 
 ### 6. Launch project ROS2 nodes
 To run the project nodes, you'll first have to source the ROS2 environment with the following command:
