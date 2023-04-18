@@ -18,7 +18,7 @@ const int LOCAL_BF_A = 3;
 const int LOCAL_BF_U = 1;
 const float MAX_ACCELERATION = 2.5f;
 const float MIN_ACCELERATION = -1.25f;
-const float MAX_ROTATION = 1.00;
+const float MAX_ROTATION = 1.0f;
 const float MAX_STEERING_ANGLE = 0.523;
 const float SERIAL_RANGE = 127.0f;
 
@@ -36,7 +36,7 @@ class NavigationPlanner {
         /*
             GLOBAL PARAMETERS
         */
-        global_params_.max_iterations = 25000;
+        global_params_.max_iterations = 10000;
         global_params_.max_generations = 100;
         global_params_.sample_time = 0.25;
         global_params_.grid_resolution = {0.20, 0.20};
@@ -68,6 +68,8 @@ class NavigationPlanner {
         local_params_.start_state = State(0);
         local_params_.goal_state = State(0);
 
+        local_model_.set_body_radius(0.6f);
+        local_model_.set_velocity_bounds(0.0f, 3.0f);
         local_model_.set_goal_threshold(0.15f);
 
         latest_steering_angle_ = 0.0f;
@@ -172,8 +174,8 @@ class NavigationPlanner {
 
     std_msgs::msg::Int8 next_turn_angle() {
         std_msgs::msg::Int8 msg;
-        const float turn_angle = local_sbmpo_->control_path().size() > 0 ? local_sbmpo_->control_path()[0][1] : 0;
-        msg.data = int(ROT_FACTOR*(SERIAL_RANGE/MAX_ROTATION)*-turn_angle);
+        const float turn_angle = local_sbmpo_->state_path().size() > 0 ? local_sbmpo_->state_path()[1][4] : 0;
+        msg.data = int(ROT_FACTOR*(SERIAL_RANGE/MAX_STEERING_ANGLE)*-turn_angle);
         return msg;
     }
 

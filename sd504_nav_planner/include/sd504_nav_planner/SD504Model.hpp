@@ -17,8 +17,13 @@ static_assert(std::is_base_of<sbmpo::Model, ModelType>::value, "ModelType must d
     public:
 
     SD504Model() {
-        body_radius_ = 0.30f;
+        body_radius_ = 0.6f;
         map_bounds_ = {-100.0f, -100.0f, 100.0f, 100.0f};
+    }
+
+    // Get the cost of a control
+    float cost(const State& state, const Control& control, const float time_span) override {
+        return time_span + control[1]*time_span/1.0f;
     }
 
     // Determine if node is valid (with obstacles and map bounds)

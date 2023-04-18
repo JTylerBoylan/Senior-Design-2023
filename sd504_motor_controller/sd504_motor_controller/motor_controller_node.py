@@ -39,7 +39,7 @@ class MotorControllerNode(Node):
         )
         
         # Set up communicate loop
-        self.comm_frequency = 5 # Hz
+        self.comm_frequency = 2 # Hz
         self.comm_timer = self.create_timer(1.0 / self.comm_frequency, self.comm_callback)
 
         self.get_logger().info('Motor Controller Initialized.')
