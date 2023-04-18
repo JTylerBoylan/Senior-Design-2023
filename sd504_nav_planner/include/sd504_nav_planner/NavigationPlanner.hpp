@@ -12,15 +12,18 @@ namespace senior_design {
 using namespace sbmpo;
 
 // General Parameters
-const int GLOBAL_DIV_POINT = 12;
+const int GLOBAL_DIV_POINT = 10;
 
 const int LOCAL_BF_A = 3;
 const int LOCAL_BF_U = 1;
 const float MAX_ACCELERATION = 2.5f;
 const float MIN_ACCELERATION = -1.25f;
-const float MAX_ROTATION = 0.523;
+const float MAX_ROTATION = 1.00;
 const float MAX_STEERING_ANGLE = 0.523;
 const float SERIAL_RANGE = 127.0f;
+
+const float ACC_FACTOR = 0.5f;
+const float ROT_FACTOR = 0.95f;
 
 class NavigationPlanner {
 
@@ -45,12 +48,13 @@ class NavigationPlanner {
         /*
             LOCAL PARAMETERS
         */
-        local_params_.max_iterations = 3000;
-        local_params_.max_generations = 40;
+        local_params_.max_iterations = 2000;
+        local_params_.max_generations = 7;
         local_params_.sample_time = 0.5;
         local_params_.grid_resolution = {0.04, 0.04, 0.015, 0.3, 0.12};
         for (int a = 0; a <= LOCAL_BF_A; a++) {
             float acc = (MAX_ACCELERATION - MIN_ACCELERATION)*float(a)/LOCAL_BF_A + MIN_ACCELERATION;
+            acc *= ACC_FACTOR;
             for (int u = 1; u <= LOCAL_BF_U; u++) {
                 float rot = (MAX_ROTATION)*float(u)/LOCAL_BF_U;
                 local_params_.samples.push_back({acc, rot});
@@ -109,9 +113,9 @@ class NavigationPlanner {
         this->print_local_run(*local_sbmpo_);
 
         // Check valid local path
-        if (local_sbmpo_->exit_code() != 0) {
-            return 1;
-        }
+        //if (local_sbmpo_->exit_code() != 0) {
+        //    return 1;
+        //}
 
         return 2;
     }
@@ -162,14 +166,14 @@ class NavigationPlanner {
     std_msgs::msg::Int8 next_drive_acceleration() {
         std_msgs::msg::Int8 msg;
         const float drive_acc = local_sbmpo_->control_path().size() > 0 ? local_sbmpo_->control_path()[0][0] : 0;
-        msg.data = int((SERIAL_RANGE/6.0f)*drive_acc);
+        msg.data = int(ACC_FACTOR*(SERIAL_RANGE/MAX_ACCELERATION)*drive_acc);
         return msg;
     }
 
     std_msgs::msg::Int8 next_turn_angle() {
         std_msgs::msg::Int8 msg;
         const float turn_angle = local_sbmpo_->control_path().size() > 0 ? local_sbmpo_->control_path()[0][1] : 0;
-        msg.data = int((SERIAL_RANGE/0.6f)*turn_angle);
+        msg.data = int(ROT_FACTOR*(SERIAL_RANGE/MAX_ROTATION)*-turn_angle);
         return msg;
     }
 

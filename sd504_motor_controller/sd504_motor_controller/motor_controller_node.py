@@ -39,7 +39,7 @@ class MotorControllerNode(Node):
         )
         
         # Set up communicate loop
-        self.comm_frequency = 10 # Hz
+        self.comm_frequency = 5 # Hz
         self.comm_timer = self.create_timer(1.0 / self.comm_frequency, self.comm_callback)
 
         self.get_logger().info('Motor Controller Initialized.')
@@ -62,16 +62,16 @@ class MotorControllerNode(Node):
         # Send motor signals to Teensy
         self.serial_port.write((ser_out + "\n").encode())
 
-        # self.get_logger().info("Sent [" + ser_out + "] to serial")
+        self.get_logger().info("Sent [" + ser_out + "] to serial")
         
         # Receive steering encoder value from Teensy
-        msg = Int8()
-        msg.data = int(self.serial_port.readline().decode())
+        #msg = Int8()
+        #msg.data = int(self.serial_port.readline().decode())
 
         # publish data to /motors/encoder
-        self.encoder_pub.publish(msg)
+        #self.encoder_pub.publish(msg)
 
-        self.get_logger().info('Published ' + str(msg.data) + ' to /motors/encoder')
+        #self.get_logger().info('Published ' + str(msg.data) + ' to /motors/encoder')
         
     def __del__(self):
         # close serial port when node is destroyed
