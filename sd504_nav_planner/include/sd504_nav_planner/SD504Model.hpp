@@ -23,7 +23,7 @@ static_assert(std::is_base_of<sbmpo::Model, ModelType>::value, "ModelType must d
 
     // Get the cost of a control
     float cost(const State& state, const Control& control, const float time_span) override {
-        return time_span + control[1]*time_span/1.0f;
+        return time_span;
     }
 
     // Determine if node is valid (with obstacles and map bounds)

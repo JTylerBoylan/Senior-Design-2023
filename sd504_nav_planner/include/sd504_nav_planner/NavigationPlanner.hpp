@@ -15,7 +15,7 @@ using namespace sbmpo;
 const int GLOBAL_DIV_POINT = 10;
 
 const int LOCAL_BF_A = 3;
-const int LOCAL_BF_U = 1;
+const int LOCAL_BF_U = 2;
 const float MAX_ACCELERATION = 2.5f;
 const float MIN_ACCELERATION = -1.25f;
 const float MAX_ROTATION = 1.0f;
@@ -68,7 +68,7 @@ class NavigationPlanner {
         local_params_.start_state = State(0);
         local_params_.goal_state = State(0);
 
-        local_model_.set_body_radius(0.6f);
+        local_model_.set_body_radius(0.5f);
         local_model_.set_velocity_bounds(0.0f, 3.0f);
         local_model_.set_goal_threshold(0.15f);
 
