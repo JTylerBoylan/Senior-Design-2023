@@ -1,3 +1,5 @@
+#define DEBUG true
+
 // motor ids
 #define STEER 0
 #define DRIVE 1
@@ -53,7 +55,7 @@ void loop() {
   run_drive();
 
   //debug
-  print_debug();
+  if (DEBUG) print_debug();
 }
 
 void print_debug() {
@@ -78,14 +80,20 @@ void read_commands() {
   while (Serial.available() > 0) { // 8 bytes = 2 ints
     motor_commands[STEER] = Serial.parseInt();
     motor_commands[DRIVE] = Serial.parseInt();
-    Serial.print("Updated commands to: ");
-    Serial.print(motor_commands[STEER]);
-    Serial.print(" & ");
-    Serial.println(motor_commands[DRIVE]);
+    if (DEBUG) Serial.print("Updated commands to: ");
+    if (DEBUG) Serial.print(motor_commands[STEER]);
+    if (DEBUG) Serial.print(" & ");
+    if (DEBUG) Serial.println(motor_commands[DRIVE]);
     while (Serial.available() > 0) Serial.read(); // flush serial
+    print_encoder();
   }
   motor_commands[STEER] = motor_commands[STEER] > DUTY_MAX || motor_commands[STEER] < DUTY_MIN ? 0 : motor_commands[STEER];
   motor_commands[DRIVE] = motor_commands[DRIVE] > DUTY_MAX || motor_commands[DRIVE] < DUTY_MIN ? 0 : motor_commands[DRIVE];
+}
+
+void print_encoder() {
+  const int enc_pos = map(encoder_val, min_encoder_val, max_encoder_val, DUTY_MIN, DUTY_MAX);
+  Serial.println(enc_pos);
 }
 
 void set_drive_speed(const int duty) {
@@ -132,7 +140,7 @@ void calibrate_steering() {
 
   delay(5000);
 
-  Serial.println("Starting calibration...");
+  if (DEBUG) Serial.println("Starting calibration...");
 
   int encoder_last = encoder_val;
 
@@ -145,8 +153,8 @@ void calibrate_steering() {
   }
   min_encoder_val = encoder_val + ENCODER_MARGIN;
 
-  Serial.print("Min encoder value set to: ");
-  Serial.println(min_encoder_val);
+  if (DEBUG) Serial.print("Min encoder value set to: ");
+  if (DEBUG) Serial.println(min_encoder_val);
 
   // find max encoder val
   set_steering_speed(CALIBRATE_SPEED_RATIO * DUTY_MIN);
@@ -157,15 +165,15 @@ void calibrate_steering() {
   }
   max_encoder_val = encoder_val - ENCODER_MARGIN;
 
-  Serial.print("Max encoder value set to: ");
-  Serial.println(max_encoder_val);
+  if (DEBUG) Serial.print("Max encoder value set to: ");
+  if (DEBUG) Serial.println(max_encoder_val);
 
-  Serial.println("Going to zero...");
+  if (DEBUG) Serial.println("Going to zero...");
 
   // go to zero position
   while(!steer_to_position(0));
 
-  Serial.println("Calibration done.");
+  if (DEBUG) Serial.println("Calibration done.");
 
   delay(5000);
 }
@@ -222,4 +230,3 @@ void initialize_encoder(void) {
   attachInterrupt(digitalPinToInterrupt(INT1), encoder1CHA, CHANGE);
   attachInterrupt(digitalPinToInterrupt(INT2), encoder1CHB, CHANGE);
 }
-
